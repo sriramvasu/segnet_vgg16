@@ -368,7 +368,7 @@ def test_segnet():
 
 
 def predict_segnet():
-	num_classes=2342
+	num_classes=12
 	batch_size_test=2
 	all_dir='SegNet-Tutorial/CamVid/allcamvid/'
 	save_folder='predictions_camvid'
