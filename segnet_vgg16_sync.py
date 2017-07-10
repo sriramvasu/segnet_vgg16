@@ -405,7 +405,7 @@ def predict_segnet():
 		feed_dict={test_data:test_data_batch};
 		pred=sess.run(prediction,feed_dict=feed_dict);
 		for i in range(pred.shape[0]):
-			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:])
+			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:].astype('uint8'))
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num
 
 	
