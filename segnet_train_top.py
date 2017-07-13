@@ -27,6 +27,9 @@ class Segnet():
 
 	def calc_loss(self,logits,labels,num_classes,weighted=False,weights=None):
 		epsilon = tf.constant(value=1e-10)
+		no_labels=tf.where(tf.logical_and(labels>=0,labels<num_classes))
+		labels=tf.gather_nd(labels,no_labels)
+		logits=tf.gather_nd(logits,no_labels)
 		labels=tf.reshape(tf.one_hot(tf.reshape(labels,[-1]),num_classes),[-1,num_classes]);
 		logits=tf.reshape(logits,[-1,num_classes]);
 		if(weighted==False):

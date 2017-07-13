@@ -296,7 +296,7 @@ def upscore_layer(x,k_shape,stride,out_channels,name,phase_train,reuse=False,out
 		# 	c1 = tf.concat(axis = 3, values = output_groups)
 		bias=tf.nn.bias_add(c1,bias);
 		relu=tf.nn.relu(bias);
-	return relu;
+	return relu
 
 
 def fc_flatten(x,num_out,name,phase_train,reuse=False,relu=False,params=Param_loader()):
@@ -326,66 +326,5 @@ def fc_convol(x,k_shape,num_out,name,phase_train,reuse=False,relu=False,params=P
 		else:
 			return bias;
 
-def train_test_split():
-	import shutil
-	split_ratio=0.15
-	path='/home/sriram/intern/datasets/data/data-with-labels/lej15/'
-	
-	if(not os.path.isdir(os.path.join(path,'training_set'))):
-		os.makedirs(os.path.join(path,'training_set'))
-	if(not os.path.isdir(os.path.join(path,'testing_set'))):
-		os.makedirs(os.path.join(path,'testing_set'))
-	if(not os.path.isdir(os.path.join(path,'val_set'))):
-		os.makedirs(os.path.join(path,'val_set'))
-	l=os.listdir(os.path.join(path,'new_labels'))
-	n=len(l)
-	a=np.array(range(n));np.random.shuffle(a)
-	test_l=l[:int(split_ratio*n)+1]
-	val_l=l[int(split_ratio*n)+1:int(2*split_ratio*n)+1]
-	train_l=l[int(2*split_ratio*n)+1:]
-	folders=['annotated_images','images','labels','new_labels','predictions']
-
-	
-
-	path_m=os.path.join(path,'training_set')
-	for f in folders:
-		path1=os.path.join(path,f)
-		path2=os.path.join(path_m,f)
-		if(not os.path.isdir(path2)):
-			os.makedirs(path2)
-		if(f=='labels'):
-			for filename in [f.split('.')[0]+'.txt' for f in train_l]:
-				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-			continue
-		for filename in train_l:
-			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-
-	path_m=os.path.join(path,'val_set')
-	for f in folders:
-		path1=os.path.join(path,f)
-		path2=os.path.join(path_m,f)
-		if(not os.path.isdir(path2)):
-			os.makedirs(path2)
-		if(f=='labels'):
-			for filename in [f.split('.')[0]+'.txt' for f in val_l]:
-				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-			continue
-
-		for filename in val_l:
-			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-
-	path_m=os.path.join(path,'testing_set')
-	for f in folders:
-		path1=os.path.join(path,f)
-		path2=os.path.join(path_m,f)
-		if(not os.path.isdir(path2)):
-			os.makedirs(path2)
-		if(f=='labels'):
-			for filename in [f.split('.')[0]+'.txt' for f in test_l]:
-				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-			continue
-
-		for filename in test_l:
-			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
 
 
