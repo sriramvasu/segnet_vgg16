@@ -193,7 +193,7 @@ def batch_norm_layer(inputT, is_training, scope,params,reuse):
 	this_name=scope+'_bn';
 	print this_name
 	if(params.pretrained==False):
-		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=False, updates_collections=None, scope=this_name)
+		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=True,scale=True, updates_collections=None, scope=this_name)
 	else:
 		if(this_name in params.layer_names):
 			print 'pretrained BN param', this_name, 'with shape', params.weight_data[this_name,'0'].shape;
@@ -202,7 +202,7 @@ def batch_norm_layer(inputT, is_training, scope,params,reuse):
 			param_initializers['beta']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
 			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=False,is_training=is_training, updates_collections=None, scope=this_name) 
 		else:
-			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=False, updates_collections=None, scope=this_name) 
+			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=True,scale=True, updates_collections=None, scope=this_name) 
 
 
 def deconv_layer(x, k_shape,stride, out_channels, name, phase_train, reuse=False,out_shape=None,params=Param_loader()):
@@ -325,3 +325,67 @@ def fc_convol(x,k_shape,num_out,name,phase_train,reuse=False,relu=False,params=P
 			return tf.nn.relu(bias);
 		else:
 			return bias;
+
+def train_test_split():
+	import shutil
+	split_ratio=0.15
+	path='/home/sriram/intern/datasets/data/data-with-labels/lej15/'
+	
+	if(not os.path.isdir(os.path.join(path,'training_set'))):
+		os.makedirs(os.path.join(path,'training_set'))
+	if(not os.path.isdir(os.path.join(path,'testing_set'))):
+		os.makedirs(os.path.join(path,'testing_set'))
+	if(not os.path.isdir(os.path.join(path,'val_set'))):
+		os.makedirs(os.path.join(path,'val_set'))
+	l=os.listdir(os.path.join(path,'new_labels'))
+	n=len(l)
+	a=np.array(range(n));np.random.shuffle(a)
+	test_l=l[:int(split_ratio*n)+1]
+	val_l=l[int(split_ratio*n)+1:int(2*split_ratio*n)+1]
+	train_l=l[int(2*split_ratio*n)+1:]
+	folders=['annotated_images','images','labels','new_labels','predictions']
+
+	
+
+	path_m=os.path.join(path,'training_set')
+	for f in folders:
+		path1=os.path.join(path,f)
+		path2=os.path.join(path_m,f)
+		if(not os.path.isdir(path2)):
+			os.makedirs(path2)
+		if(f=='labels'):
+			for filename in [f.split('.')[0]+'.txt' for f in train_l]:
+				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+			continue
+		for filename in train_l:
+			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+
+	path_m=os.path.join(path,'val_set')
+	for f in folders:
+		path1=os.path.join(path,f)
+		path2=os.path.join(path_m,f)
+		if(not os.path.isdir(path2)):
+			os.makedirs(path2)
+		if(f=='labels'):
+			for filename in [f.split('.')[0]+'.txt' for f in val_l]:
+				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+			continue
+
+		for filename in val_l:
+			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+
+	path_m=os.path.join(path,'testing_set')
+	for f in folders:
+		path1=os.path.join(path,f)
+		path2=os.path.join(path_m,f)
+		if(not os.path.isdir(path2)):
+			os.makedirs(path2)
+		if(f=='labels'):
+			for filename in [f.split('.')[0]+'.txt' for f in test_l]:
+				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+			continue
+
+		for filename in test_l:
+			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+
+

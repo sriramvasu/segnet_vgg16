@@ -71,9 +71,9 @@ class Segnet():
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
 		print_shape(pool1);
-		self.rt['conv1_1']=conv1_1
-		self.rt['conv1_2']=conv1_2
-		self.rt['pool1']=pool1
+		# self.rt['conv1_1']=conv1_1
+		# self.rt['conv1_2']=conv1_2
+		# self.rt['pool1']=pool1
 		# self.rt['pool1_mask']=pool1_mask
 
 
@@ -89,9 +89,9 @@ class Segnet():
 		else:
 			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
 		print_shape(pool2);
-		self.rt['conv2_1']=conv2_1
-		self.rt['conv2_2']=conv2_2
-		self.rt['pool2']=pool2
+		# self.rt['conv2_1']=conv2_1
+		# self.rt['conv2_2']=conv2_2
+		# self.rt['pool2']=pool2
 		# self.rt['pool2_mask']=pool2_mask
 
 
@@ -112,10 +112,10 @@ class Segnet():
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
 		print_shape(pool3);
-		self.rt['conv3_1']=conv3_1
-		self.rt['conv3_2']=conv3_2
-		self.rt['conv3_3']=conv3_3
-		self.rt['pool3']=pool3
+		# self.rt['conv3_1']=conv3_1
+		# self.rt['conv3_2']=conv3_2
+		# self.rt['conv3_3']=conv3_3
+		# self.rt['pool3']=pool3
 		# self.rt['pool3_mask']=pool3_mask
 
 
@@ -135,10 +135,10 @@ class Segnet():
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
 		print_shape(pool4);
-		self.rt['conv4_1']=conv4_1
-		self.rt['conv4_2']=conv4_2
-		self.rt['conv4_3']=conv4_3
-		self.rt['pool4']=pool4
+		# self.rt['conv4_1']=conv4_1
+		# self.rt['conv4_2']=conv4_2
+		# self.rt['conv4_3']=conv4_3
+		# self.rt['pool4']=pool4
 		# self.rt['pool4_mask']=pool4_mask
 
 
@@ -158,10 +158,10 @@ class Segnet():
 		else:
 			pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
 		print_shape(pool5);
-		self.rt['conv5_1']=conv5_1
-		self.rt['conv5_2']=conv5_2
-		self.rt['conv5_3']=conv5_3
-		self.rt['pool5']=pool5
+		# self.rt['conv5_1']=conv5_1
+		# self.rt['conv5_2']=conv5_2
+		# self.rt['conv5_3']=conv5_3
+		# self.rt['pool5']=pool5
 		# self.rt['pool5_mask']=pool5_mask
 
 
@@ -188,10 +188,10 @@ class Segnet():
 		conv5_1_D = conv_bn(conv5_2_D, [3,3], 512,[1,1], name="conv5_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv5_1_D);
 
-		self.rt['pool5_D']=pool5_D
-		self.rt['conv5_3_D']=conv5_3_D
-		self.rt['conv5_2_D']=conv5_2_D
-		self.rt['conv5_1_D']=conv5_1_D
+		# self.rt['pool5_D']=pool5_D
+		# self.rt['conv5_3_D']=conv5_3_D
+		# self.rt['conv5_2_D']=conv5_2_D
+		# self.rt['conv5_1_D']=conv5_1_D
 
 	
 		# Upsample 4
@@ -209,10 +209,10 @@ class Segnet():
 		print_shape(conv4_2_D);
 		conv4_1_D = conv_bn(conv4_2_D, [3,3], 256,[1,1], name="conv4_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv4_1_D);
-		self.rt['pool4_D']=pool4_D
-		self.rt['conv4_3_D']=conv4_3_D
-		self.rt['conv4_2_D']=conv4_2_D
-		self.rt['conv4_1_D']=conv4_1_D
+		# self.rt['pool4_D']=pool4_D
+		# self.rt['conv4_3_D']=conv4_3_D
+		# self.rt['conv4_2_D']=conv4_2_D
+		# self.rt['conv4_1_D']=conv4_1_D
 
 
 
@@ -233,10 +233,10 @@ class Segnet():
 		print_shape(conv3_2_D);
 		conv3_1_D = conv_bn(conv3_2_D, [3,3], 128,[1,1], name="conv3_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv3_1_D);
-		self.rt['pool3_D']=pool3_D
-		self.rt['conv3_3_D']=conv3_3_D
-		self.rt['conv3_2_D']=conv3_2_D
-		self.rt['conv3_1_D']=conv3_1_D
+		# self.rt['pool3_D']=pool3_D
+		# self.rt['conv3_3_D']=conv3_3_D
+		# self.rt['conv3_2_D']=conv3_2_D
+		# self.rt['conv3_1_D']=conv3_1_D
 
 	
 	    
@@ -252,15 +252,15 @@ class Segnet():
 		print_shape(pool2_D);
 
 		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_1_D);
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv2_2);
-		self.rt['pool2_D']=pool2_D
-		self.rt['conv2_2_D']=conv2_2_D
-		self.rt['conv2_1_D']=conv2_1_D
+		# self.rt['pool2_D']=pool2_D
+		# self.rt['conv2_2_D']=conv2_2_D
+		# self.rt['conv2_1_D']=conv2_1_D
 
 
 	    
@@ -275,15 +275,15 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
-		self.rt['pool1_D']=pool1_D
-		self.rt['conv1_2_D']=conv1_2_D
-		self.rt['conv1_1_D']=conv1_1_D
+		# self.rt['pool1_D']=pool1_D
+		# self.rt['conv1_2_D']=conv1_2_D
+		# self.rt['conv1_1_D']=conv1_1_D
 
 
 
@@ -330,12 +330,6 @@ def test_segnet():
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
 		[logits,pred]=sess.run([test_logits,prediction],feed_dict=feed_dict);
-		# out_dict=sess.run(net.rt,feed_dict=feed_dict)
-		
-		# print pred.shape
-		# print test_label_batch.shape
-		# print pred
-		# print test_label_batch
 
 		print 'pred stats'
 		for i in range(num_classes):
@@ -348,12 +342,7 @@ def test_segnet():
 		corr=np.where(test_label_batch==pred)[0].size;
 		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
-		# np.save('temp.npy',out_dict)
 
-		# for i in out_dict:
-		# 	print i
-		# 	print out_dict[i].shape
-			# h.create_dataset(name=i,data=out_dict[i])
 		viz=np.zeros([pred.shape[0]]+image_size)
 		colors=color_map(num_classes)
 		for cl in range(num_classes):
@@ -475,21 +464,22 @@ def evaluate_segnet_arl(absent_classes):
 
 def train_segnet():
 	
-	num_classes=12;
+	num_classes=8;
 	n_epochs=100;
-	batch_size_train=6;
+	batch_size_train=3;
 	batch_size_valid=1;
 	lr_decay_every=5;
 	validate_every=5;
 	save_every=10
 	base_lr=1e-6;
-	train_data_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/training_set/images/'
-	train_label_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/training_set/new_labels/'
+	img_size=[360,480]
+	train_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/images/'
+	train_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/new_labels/'
 
-	test_data_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/testing_set/images/'
-	test_label_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/testing_set/new_labels/'
-	reader=image_reader(train_data_dir,train_label_dir,batch_size_train);
-	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid);
+	test_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/images/'
+	test_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/new_labels/'
+	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3]);
+	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3]);
 	image_size=reader.image_size;
 	n_batches=reader.n_batches;
 	f_train=open('train_log_file','w+');
@@ -502,7 +492,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path='segnet_road.h5');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.h5');
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
@@ -533,7 +523,7 @@ def train_segnet():
 
 
 		if((reader.epoch+1)%save_every==0):
-			saver.save(sess,'segnet_model',global_step=(reader.epoch+1))
+			saver.save(sess,'segnet_arlmodel',global_step=(reader.epoch+1))
 
 		if((reader.epoch+1)%validate_every==0):
 			reader_valid.reset_reader()
@@ -559,4 +549,4 @@ def save_hdf5(sess,var_list):
 
 
 os.environ['CUDA_VISIBLE_DEVICES']="0";
-predict_segnet()
+train_segnet()
