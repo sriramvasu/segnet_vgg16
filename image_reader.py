@@ -14,7 +14,7 @@ class image_reader():
 		self.label_dir=label_dir;
 		self.batch_size=batch_size;
 		self.data_files=np.sort(glob.glob(self.data_dir+'*'));
-		self.label_files=np.sort(glob.glob(self.label_dir+'*'));
+		self.label_files=np.sort(glob.glob(self.label_dir+'*'));	
 		if(image_size==None):
 			self.image_size=sp.imread(self.data_files[0]).shape
 		else:
@@ -23,7 +23,6 @@ class image_reader():
 		self.label_siz=np.size(self.label_files);
 		self.size=min(self.data_siz,self.label_siz);
 		self.n_batches=ceil(self.size*1.0/self.batch_size);
-
 		self.data_files=self.data_files[:self.size];
 		self.label_files=self.label_files[:self.size];\
 		self.reset_reader();
