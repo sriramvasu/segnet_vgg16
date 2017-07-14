@@ -6,6 +6,7 @@ from utils_mod import *
 import matplotlib.pyplot as plt
 from color_map import *
 import h5py
+import fnmatch
 
 class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
@@ -421,6 +422,8 @@ def evaluate_segnet_camvid():
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	count=0;s=0
 	for i in [f for f in os.listdir(pred_path) if os.path.isdir(os.path.join(pred_path,f))]:
+		if(i!='test'):
+			continue
 		path1=os.path.join(pred_path,i)
 		for prediction in fnmatch.filter(os.listdir(path1),'*.png'):
 			pred_img=sp.imread(os.path.join(path1,prediction))
@@ -429,6 +432,19 @@ def evaluate_segnet_camvid():
 			for cl in range(num_classes):
 				t=np.where(pred_img==cl)
 				modpred_img[t]=int(match_labels[cl][-1])
+			
+			#confusion matrix calc
+			confusion_mat=np.zeros([11,11])
+			total_mat=np.zeros([11,11])
+			for cl in range(11):
+				t=np.where(label_img==cl)
+				confusion_mat[cl,:]=confusion_mat[cl,:]+(np.histogram(modpred_img[t],range(11))[1]).reshape(-1)
+				total_mat[cl,:]=total_mat[cl,:]+t[0].size*np.ones(12)
+
+
+
+			
+
 			corr_pix=np.where(modpred_img==label_img)[0].size
 			non_exist=np.where(label_img==11)[0].size
 			total_pix=modpred_img.shape[0]*modpred_img.shape[1]-non_exist
@@ -437,18 +453,21 @@ def evaluate_segnet_camvid():
 			count=count+1
 			agg_acc=s/count
 			print i,prediction,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
+	print confusion_mat
+	print total_mat
 
 
-def evaluate_segnet_arl(absent_classes):  
+def evaluate_segnet_arl(absent_classes=None):  
 	#55% on lej15 and 45% on b507 after removing 5 absent classes. 
 	#Accuracy suffers slightly upon adding those classes as a general object
 	# Retrain segnet on ira7 dataset
 
-	pred_path='/home/sriram/intern/datasets/data/data-with-labels/b507/predictions/'
-	labels_path='/home/sriram/intern/datasets/data/data-with-labels/b507/new_labels/'
-	# absent_classes=[7,8,10,11]
+	pred_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/predictions/'
+	labels_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/new_labels/'
+	if absent_classes is None:
+		absent_classes=[2,7,8,10,11]
 	num_classes=12
-	file=open(os.path.join('/home/sriram/intern/datasets/data/data-with-labels/b507/','match_labels.txt'))
+	file=open(os.path.join('/home/sriram/intern/datasets/data/data-with-labels/lej15/','match_labels.txt'))
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
@@ -558,5 +577,5 @@ def save_hdf5(sess,var_list):
 
 
 
-os.environ['CUDA_VISIBLE_DEVICES']="0";
-predict_segnet()
+# os.environ['CUDA_VISIBLE_DEVICES']="0";
+# evaluate_segnet_camvid()

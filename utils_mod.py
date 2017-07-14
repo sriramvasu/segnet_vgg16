@@ -81,7 +81,7 @@ def get_deconv_weights(params,shape,layer_name,var_name,stddev=1):
 			return wt;
 
 
-def get_weights(params,shape,layer_name,var_name,stddev=1):
+def get_weights(params,shape,layer_name,var_name,trainable,stddev=1):
 	# params.transposer=[3,2,1,0];
 	params.transposer=[2,3,1,0]
 	with tf.variable_scope(var_name):
@@ -91,14 +91,14 @@ def get_weights(params,shape,layer_name,var_name,stddev=1):
 			if layer_name in params.layer_names:
 				print 'loading pretrained weight for ',layer_name,'with shape:',shape;
 				# print np.transpose(params.weight_data[layer_name,'0'],transposer).reshape(shape)
-				wt=tf.get_variable(trainable=False,initializer=tf.constant_initializer(np.transpose(params.weight_data[layer_name,'0'],params.transposer)),shape=shape,name=var_name);
+				wt=tf.get_variable(trainable=trainable,initializer=tf.constant_initializer(np.transpose(params.weight_data[layer_name,'0'],params.transposer)),shape=shape,name=var_name);
 			else:
 				wt=tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
 			return wt;
 
 
 
-def get_biases(params,shape,var_name,layer_name,val=1.0):
+def get_biases(params,shape,var_name,layer_name,trainable,val=1.0):
 	with tf.variable_scope(layer_name):
 		if(params.pretrained==False):
 			return tf.get_variable(initializer=tf.constant_initializer(val),shape=shape,name=var_name);
@@ -106,7 +106,7 @@ def get_biases(params,shape,var_name,layer_name,val=1.0):
 			if layer_name in params.layer_names:
 				print 'loading pretrained bias for ',layer_name,'with shape:',shape;
 				# print params.weight_data[layer_name,'1'].reshape(shape)
-				bias=tf.get_variable(trainable=False,initializer=tf.constant_initializer(params.weight_data[layer_name,'1'].reshape(shape)),shape=shape,name=var_name)
+				bias=tf.get_variable(trainable=trainable,initializer=tf.constant_initializer(params.weight_data[layer_name,'1'].reshape(shape)),shape=shape,name=var_name)
 			else:
 				bias=tf.get_variable(initializer=tf.constant_initializer(val),shape=shape,name=var_name);
 			return bias;
@@ -143,10 +143,10 @@ def conv(x,k_shape,num_filters,stride,name,groups=1,padding='SAME',weights=Param
 def print_shape(obj):
 	print obj.name,obj.get_shape().as_list();
 
-def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=False,padding='SAME',relu=True, batch_norm=True,groups=1,params=Param_loader()):
+def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=False,padding='SAME',relu=True, batch_norm=True,groups=1,params=Param_loader(),trainable=False):
 	in_channels = inputT.get_shape().as_list()[-1];
 	with tf.variable_scope(name,reuse=reuse):
-		kernel = get_weights(params,var_name='weights', shape=[k_shape[0],k_shape[1],in_channels/groups,out_channels],layer_name=name,stddev=1e-1);
+		kernel = get_weights(params,var_name='weights', shape=[k_shape[0],k_shape[1],in_channels/groups,out_channels],layer_name=name,trainable=trainable,stddev=1e-1);
 		if(groups==1):
 			c1=tf.nn.conv2d(inputT,kernel,strides=[1,stride[0],stride[1],1],padding=padding);
 		else:
@@ -155,7 +155,7 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 			output_groups = [tf.nn.conv2d(i, k,strides=[1,stride[0],stride[1],1],padding=padding) for i,k in zip(input_groups, weight_groups)]
 			c1 = tf.concat(axis = 3, values = output_groups)
 		# conv = tf.nn.conv2d(inputT, kernel, [1, stride[0], stride[1], 1], padding='SAME')
-		biases = get_biases(params,var_name='biases', shape=[out_channels],val=0.0,layer_name=name)
+		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if relu is True and batch_norm is True:
 			conv_out = tf.nn.relu(batch_norm_layer(bias, phase_train,name,params,reuse=reuse))
