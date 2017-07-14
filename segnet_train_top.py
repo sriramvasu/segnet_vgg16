@@ -3,9 +3,11 @@ import numpy as np
 import os
 from image_reader import *
 from utils_mod import *
-import matplotlib.pyplot as plt
-from color_map import *
-import h5py
+from argparse import ArgumentParser
+try:
+  import h5py
+except:
+  pass
 
 class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
@@ -297,6 +299,8 @@ class Segnet():
 		
 
 def test_segnet():
+        import matplotlib.pyplot as plt
+        from color_map import *
 	num_classes=12;
 	batch_size_test=2
 	train_data_dir='SegNet-Tutorial/CamVid/train/'
@@ -476,11 +480,11 @@ def train_segnet():
 	save_every=10
 	base_lr=1e-6;
 	img_size=[360,480]
-	train_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/images/'
-	train_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/new_labels/'
+	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
 
-	test_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/images/'
-	test_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/new_labels/'
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3]);
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3]);
 	image_size=reader.image_size;
@@ -495,7 +499,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.h5');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy');
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
@@ -513,9 +517,8 @@ def train_segnet():
 	# saver.restore(sess,'segnet_model')
 	print 'initialized vars';
 	cnt=0;
-	while(reader.epoch<n_epochs):
+	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
-
 			[train_data_batch,train_label_batch]=reader.next_batch();
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
@@ -550,6 +553,16 @@ def save_hdf5(sess,var_list):
 	file.create_dataset()
 
 
-
-os.environ['CUDA_VISIBLE_DEVICES']="0";
-train_segnet()
+if __name__=="__main__":
+  parser = ArgumentParser()
+  parser.add_argument('-devbox',type=int,default=0)
+  args = parser.parse_args()
+  
+  if args.devbox:
+    BASE_DIR = '/root/segnet_vgg16'
+    os.environ['CUDA_VISIBLE_DEVICES']="0";
+  else:
+    BASE_DIR = '/home/sriram/intern'
+    os.environ['CUDA_VISIBLE_DEVICES']="";
+  
+  train_segnet()
