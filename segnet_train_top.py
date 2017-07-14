@@ -3,9 +3,11 @@ import numpy as np
 import os
 from image_reader import *
 from utils_mod import *
-import matplotlib.pyplot as plt
-from color_map import *
-import h5py
+from argparse import ArgumentParser
+try:
+  import h5py
+except:
+  pass
 
 class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
@@ -255,9 +257,9 @@ class Segnet():
 		print_shape(pool2_D);
 
 		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv2_1_D);
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv2_2);
@@ -278,9 +280,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -297,6 +299,8 @@ class Segnet():
 		
 
 def test_segnet():
+        import matplotlib.pyplot as plt
+        from color_map import *
 	num_classes=12;
 	batch_size_test=2
 	train_data_dir='SegNet-Tutorial/CamVid/train/'
@@ -476,11 +480,11 @@ def train_segnet():
 	save_every=10
 	base_lr=1e-6;
 	img_size=[360,480]
-	train_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/images/'
-	train_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/training_set/new_labels/'
+	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
 
-	test_data_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/images/'
-	test_label_dir='/home/sriram/intern/datasets/data/data-with-labels/lej15/val_set/new_labels/'
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3]);
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3]);
 	image_size=reader.image_size;
@@ -495,7 +499,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.h5');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy');
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
@@ -513,33 +517,17 @@ def train_segnet():
 	# saver.restore(sess,'segnet_model')
 	print 'initialized vars';
 	cnt=0;
-	while(reader.epoch<n_epochs):
+	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
-
 			[train_data_batch,train_label_batch]=reader.next_batch();
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
 
-
-			#Accuracy measurement for custom data
-			# modpred_img=-1*np.ones(pred.shape)
-			# for cl in range(num_classes):
-			# 	if cl in absent_classes:
-			# 		continue
-			# 	t=np.where(pred_img==cl)
-			# 	modpred_img[t]=int(match_labels[cl][-1])
-			# cond=np.where(np.logical_and(label_img!=255,modpred_img!=-1))
-			# corr=np.where(modpred_img[cond]==label_img[cond])[0].size
-			# total_pix=cond[0].size
-			# acc=corr_pix*1.0/total_pix
-
-
-
-			t=np.where(train_label_batch!=255)
+			t=np.where(np.logical_or(train_label_batch>=0,train_label_batch<num_classes))
 			corr=np.where(train_label_batch[t]==pred[t])[0].size;
 			# total_pix=(np.prod(image_size[:-1])*batch_size_train)
 			total_pix=t[0].size
-			acc=corr*1.0/total_pix;
+			acc=corr*1.0/total_pix
 			print 'Training',' learning rate:', sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),' epoch:',reader.epoch+1,' Batch:',reader.batch_num,' Accuracy:',acc;
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n');
 
@@ -554,8 +542,14 @@ def train_segnet():
 				[valid_data_batch,valid_label_batch]=reader_valid.next_batch();
 				feed_dict_validate={valid_data:valid_data_batch,valid_labels:valid_label_batch};
 				pred_valid=sess.run([prediction_valid],feed_dict=feed_dict_validate);
-				corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
-				acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
+
+				t=np.where(np.logical_or(valid_label_batch>=0,valid_label_batch<num_classes))
+				corr_valid=np.where(valid_label_batch[t]==pred_valid[t])[0].size;
+				# total_pix=(np.prod(image_size[:-1])*batch_size_train)
+				total_pix=t[0].size
+				acc_valid=corr_valid*1.0/total_pix
+				# corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
+				# acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
 				print 'Validation',' Batch:',reader_valid.batch_num,' Accuracy:',acc_valid;
 				f_train.write('Validation'+' Batch: '+str(reader_valid.batch_num)+' Accuracy:'+str(acc_valid)+'\n');
 
@@ -569,6 +563,16 @@ def save_hdf5(sess,var_list):
 	file.create_dataset()
 
 
-
-os.environ['CUDA_VISIBLE_DEVICES']="0";
-train_segnet()
+if __name__=="__main__":
+  parser = ArgumentParser()
+  parser.add_argument('-devbox',type=int,default=0)
+  args = parser.parse_args()
+  
+  if args.devbox:
+    BASE_DIR = '/root/segnet_vgg16'
+    os.environ['CUDA_VISIBLE_DEVICES']="0";
+  else:
+    BASE_DIR = '/home/sriram/intern'
+    os.environ['CUDA_VISIBLE_DEVICES']="";
+  
+  train_segnet()
