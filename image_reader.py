@@ -27,7 +27,7 @@ class image_reader():
 		self.data_files=self.data_files[:self.size];
 		self.label_files=self.label_files[:self.size];\
 		self.reset_reader();
-		# self.shuffle_data();
+		self.shuffle_data();
 	def print_content():
 		while(raw_input()!='q'):
 			print 'epoch',self.epoch;
