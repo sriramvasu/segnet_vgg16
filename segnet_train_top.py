@@ -255,9 +255,9 @@ class Segnet():
 		print_shape(pool2_D);
 
 		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv2_1_D);
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv2_2);
@@ -278,9 +278,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -519,8 +519,27 @@ def train_segnet():
 			[train_data_batch,train_label_batch]=reader.next_batch();
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
-			corr=np.where(train_label_batch==pred)[0].size;
-			acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_train);
+
+
+			#Accuracy measurement for custom data
+			# modpred_img=-1*np.ones(pred.shape)
+			# for cl in range(num_classes):
+			# 	if cl in absent_classes:
+			# 		continue
+			# 	t=np.where(pred_img==cl)
+			# 	modpred_img[t]=int(match_labels[cl][-1])
+			# cond=np.where(np.logical_and(label_img!=255,modpred_img!=-1))
+			# corr=np.where(modpred_img[cond]==label_img[cond])[0].size
+			# total_pix=cond[0].size
+			# acc=corr_pix*1.0/total_pix
+
+
+
+			t=np.where(train_label_batch!=255)
+			corr=np.where(train_label_batch[t]==pred[t])[0].size;
+			# total_pix=(np.prod(image_size[:-1])*batch_size_train)
+			total_pix=t[0].size
+			acc=corr*1.0/total_pix;
 			print 'Training',' learning rate:', sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),' epoch:',reader.epoch+1,' Batch:',reader.batch_num,' Accuracy:',acc;
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n');
 
