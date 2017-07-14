@@ -522,8 +522,12 @@ def train_segnet():
 			[train_data_batch,train_label_batch]=reader.next_batch();
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
-			corr=np.where(train_label_batch==pred)[0].size;
-			acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_train);
+
+			t=np.where(np.logical_or(train_label_batch>=0,train_label_batch<num_classes))
+			corr=np.where(train_label_batch[t]==pred[t])[0].size;
+			# total_pix=(np.prod(image_size[:-1])*batch_size_train)
+			total_pix=t[0].size
+			acc=corr*1.0/total_pix
 			print 'Training',' learning rate:', sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),' epoch:',reader.epoch+1,' Batch:',reader.batch_num,' Accuracy:',acc;
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n');
 
@@ -538,8 +542,14 @@ def train_segnet():
 				[valid_data_batch,valid_label_batch]=reader_valid.next_batch();
 				feed_dict_validate={valid_data:valid_data_batch,valid_labels:valid_label_batch};
 				pred_valid=sess.run([prediction_valid],feed_dict=feed_dict_validate);
-				corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
-				acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
+
+				t=np.where(np.logical_or(valid_label_batch>=0,valid_label_batch<num_classes))
+				corr_valid=np.where(valid_label_batch[t]==pred_valid[t])[0].size;
+				# total_pix=(np.prod(image_size[:-1])*batch_size_train)
+				total_pix=t[0].size
+				acc_valid=corr_valid*1.0/total_pix
+				# corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
+				# acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
 				print 'Validation',' Batch:',reader_valid.batch_num,' Accuracy:',acc_valid;
 				f_train.write('Validation'+' Batch: '+str(reader_valid.batch_num)+' Accuracy:'+str(acc_valid)+'\n');
 
