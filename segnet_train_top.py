@@ -4,6 +4,8 @@ import os
 from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
+import matplotlib.pyplot as plt
+from color_map import *
 try:
   import h5py
 except:
@@ -299,9 +301,8 @@ class Segnet():
 		
 
 def test_segnet():
-        import matplotlib.pyplot as plt
-        from color_map import *
-	num_classes=12;
+
+	num_classes=12
 	batch_size_test=2
 	train_data_dir='SegNet-Tutorial/CamVid/train/'
 	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
@@ -332,36 +333,55 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer());
 	print 'initialized vars';
 	plt.ion()
+
+	file=open(os.path.join('match_labels.txt'))
+	match_labels=file.readlines()
+	file.close()
+	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+
 	# h = h5py.File('tf_data1.h5', 'w')
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
 		[logits,pred]=sess.run([test_logits,prediction],feed_dict=feed_dict);
 
-		print 'pred stats'
-		for i in range(num_classes):
-			print np.where(pred==i)[0].size
+		# print 'pred stats'
+		# for i in range(num_classes):
+		# 	print np.where(pred==i)[0].size
 
-		print 'label stats'
-		for i in range(num_classes):
-			print np.where(test_label_batch==i)[0].size
+		# print 'label stats'
+		# for i in range(num_classes):
+		# 	print np.where(test_label_batch==i)[0].size
+		# 	
 
-		corr=np.where(test_label_batch==pred)[0].size;
-		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
+		# corr=np.where(test_label_batch==pred)[0].size;
+		# acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
+		# print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+		[corr,total_pix]=transform_labels(pred,test_label_batch,match_labels)
+		acc=corr*1.0/total_pix
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
 
-		viz=np.zeros([pred.shape[0]]+image_size)
-		colors=color_map(num_classes)
-		for cl in range(num_classes):
-			t=np.where(pred==cl)
-			viz[t]=colors[cl,:]
-		plt.figure(1)
-		plt.imshow(viz[0,:])
-		plt.figure(2)
-		plt.imshow(test_label_batch[0,:])
-		plt.show()
-		plt.pause(0.05)
+		# viz=np.zeros([pred.shape[0]]+image_size)
+		# colors=color_map(num_classes)
+		# for cl in range(num_classes):
+		# 	t=np.where(pred==cl)
+		# 	viz[t]=colors[cl,:]
+		# plt.figure(1)
+		# plt.imshow(viz[0,:])
+		# plt.figure(2)
+		# plt.imshow(test_label_batch[0,:])
+		# plt.show()
+		# plt.pause(0.05)
 
+def transform_labels(pred,label_img,match_labels):
+
+	modpred_img=pred[:]
+	for cl in range(num_classes):
+		t=np.where(pred==cl)
+		modpred_img[t]=int(match_labels[cl][-1])
+	corr_pix=np.where(modpred_img==label_img)[0].size
+	non_exist=np.where(label_img==11)[0].size
+	total_pix=modpred_img.size-non_exist
 
 def predict_segnet():
 	num_classes=12
@@ -525,6 +545,12 @@ def train_segnet():
 	# saver.restore(sess,'segnet_model')
 	print 'initialized vars';
 	cnt=0;
+
+	file=open(os.path.join('match_labels.txt'))
+	match_labels=file.readlines()
+	file.close()
+	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+
 	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
 			[train_data_batch,train_label_batch]=reader.next_batch();
@@ -532,11 +558,16 @@ def train_segnet():
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
 
 			t=np.where(np.logical_or(train_label_batch>=0,train_label_batch<num_classes))
-			corr=np.where(train_label_batch[t]==pred[t])[0].size;
-			# total_pix=(np.prod(image_size[:-1])*batch_size_train)
-			total_pix=t[0].size
+
+			[corr,total_pix]=transform_labels(pred[t],train_label_batch[t],match_labels)
 			acc=corr*1.0/total_pix
-			print 'Training',' learning rate:', sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),' epoch:',reader.epoch+1,' Batch:',reader.batch_num,' Accuracy:',acc;
+			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+
+			# corr=np.where(train_label_batch[t]==pred[t])[0].size;
+			# # total_pix=(np.prod(image_size[:-1])*batch_size_train)
+			# total_pix=t[0].size
+			# acc=corr*1.0/total_pix
+			# print 'Training',' learning rate:', sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),' epoch:',reader.epoch+1,' Batch:',reader.batch_num,' Accuracy:',acc;
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n');
 
 
