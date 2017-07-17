@@ -558,7 +558,7 @@ def train_segnet():
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
 
-			t=np.where(np.logical_or(train_label_batch>=0,train_label_batch<num_classes))
+			t=np.where(np.logical_and(train_label_batch>=0,train_label_batch<num_classes))
 
 			[corr,total_pix]=transform_labels(pred[t],train_label_batch[t],match_labels,num_classes)
 			acc=corr*1.0/total_pix
@@ -581,9 +581,9 @@ def train_segnet():
 			while(reader_valid.batch_num<reader_valid.n_batches):
 				[valid_data_batch,valid_label_batch]=reader_valid.next_batch();
 				feed_dict_validate={valid_data:valid_data_batch,valid_labels:valid_label_batch};
-				pred_valid=sess.run([prediction_valid],feed_dict=feed_dict_validate);
+				pred_valid=sess.run(prediction_valid,feed_dict=feed_dict_validate);
 
-				t=np.where(np.logical_or(valid_label_batch>=0,valid_label_batch<num_classes))
+				t=np.where(np.logical_and(valid_label_batch>=0,valid_label_batch<num_classes))
 
 				[corr,total_pix]=transform_labels(pred_valid[t],valid_label_batch[t],match_labels,num_classes)
 				acc=corr*1.0/total_pix
