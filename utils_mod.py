@@ -158,11 +158,11 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if relu is True and batch_norm is True:
-			conv_out = tf.nn.relu(batch_norm_layer(bias, phase_train,name,params,reuse=reuse))
+			conv_out = tf.nn.relu(batch_norm_layer(bias, phase_train,name,params,reuse=reuse,trainable=trainable))
 		elif relu is True and batch_norm is False:
 			conv_out = tf.nn.relu(bias);
 		elif relu is False and batch_norm is True:
-			conv_out=batch_norm_layer(bias,phase_train,name,params,reuse=reuse);
+			conv_out=batch_norm_layer(bias,phase_train,name,params,reuse=reuse,trainable=trainable);
 		else:
 			conv_out=bias;
 	return conv_out
@@ -192,7 +192,7 @@ from tensorflow.python.ops import gen_nn_ops
 def _MaxPoolWithArgmaxGrad(op, grad, some_other_arg):
 	return gen_nn_ops._max_pool_grad(op.inputs[0],op.outputs[0],grad,op.get_attr("ksize"),op.get_attr("strides"),padding=op.get_attr("padding"),data_format='NHWC')
 
-def batch_norm_layer(inputT, is_training, scope,params,reuse):
+def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
 	this_name=scope+'_bn';
 	print this_name
 	if(params.pretrained==False):
@@ -203,7 +203,7 @@ def batch_norm_layer(inputT, is_training, scope,params,reuse):
 			param_initializers=dict()
 			param_initializers['gamma']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
 			param_initializers['beta']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
-			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=False,is_training=is_training, updates_collections=None, scope=this_name) 
+			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=trainable,is_training=is_training, updates_collections=None, scope=this_name) 
 		else:
 			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=True,scale=True, updates_collections=None, scope=this_name) 
 

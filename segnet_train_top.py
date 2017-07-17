@@ -343,7 +343,7 @@ def test_segnet():
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
-		[logits,pred]=sess.run([test_logits,prediction],feed_dict=feed_dict);
+		pred=sess.run(prediction,feed_dict=feed_dict);
 
 		# print 'pred stats'
 		# for i in range(num_classes):
