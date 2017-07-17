@@ -327,10 +327,6 @@ def test_segnet():
 	print 'initialized vars';
 	plt.ion()
 
-	file=open(os.path.join('match_labels.txt'))
-	match_labels=file.readlines()
-	file.close()
-	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	# h = h5py.File('tf_data1.h5', 'w')
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();

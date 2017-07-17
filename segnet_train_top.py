@@ -4,7 +4,7 @@ import os
 from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from color_map import *
 try:
   import h5py
@@ -321,7 +321,7 @@ def test_segnet():
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
 
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.h5')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	test_logits=net.inference(test_data,is_training=False,reuse=False);
 	print 'built network';
 	
@@ -357,7 +357,7 @@ def test_segnet():
 		# corr=np.where(test_label_batch==pred)[0].size;
 		# acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
 		# print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
-		[corr,total_pix]=transform_labels(pred,test_label_batch,match_labels)
+		[corr,total_pix]=transform_labels(pred,test_label_batch,match_labels,num_classes)
 		acc=corr*1.0/total_pix
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
 
@@ -373,7 +373,7 @@ def test_segnet():
 		# plt.show()
 		# plt.pause(0.05)
 
-def transform_labels(pred,label_img,match_labels):
+def transform_labels(pred,label_img,match_labels,num_classes):
 
 	modpred_img=pred[:]
 	for cl in range(num_classes):
@@ -382,6 +382,7 @@ def transform_labels(pred,label_img,match_labels):
 	corr_pix=np.where(modpred_img==label_img)[0].size
 	non_exist=np.where(label_img==11)[0].size
 	total_pix=modpred_img.size-non_exist
+	return [corr_pix,total_pix]
 
 def predict_segnet():
 	num_classes=12
@@ -559,9 +560,9 @@ def train_segnet():
 
 			t=np.where(np.logical_or(train_label_batch>=0,train_label_batch<num_classes))
 
-			[corr,total_pix]=transform_labels(pred[t],train_label_batch[t],match_labels)
+			[corr,total_pix]=transform_labels(pred[t],train_label_batch[t],match_labels,num_classes)
 			acc=corr*1.0/total_pix
-			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
 
 			# corr=np.where(train_label_batch[t]==pred[t])[0].size;
 			# # total_pix=(np.prod(image_size[:-1])*batch_size_train)
@@ -583,14 +584,21 @@ def train_segnet():
 				pred_valid=sess.run([prediction_valid],feed_dict=feed_dict_validate);
 
 				t=np.where(np.logical_or(valid_label_batch>=0,valid_label_batch<num_classes))
-				corr_valid=np.where(valid_label_batch[t]==pred_valid[t])[0].size;
-				# total_pix=(np.prod(image_size[:-1])*batch_size_train)
-				total_pix=t[0].size
-				acc_valid=corr_valid*1.0/total_pix
+
+				[corr,total_pix]=transform_labels(pred_valid[t],valid_label_batch[t],match_labels,num_classes)
+				acc=corr*1.0/total_pix
+				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+
+				# corr_valid=np.where(valid_label_batch[t]==pred_valid[t])[0].size;
+				# # total_pix=(np.prod(image_size[:-1])*batch_size_train)
+				# total_pix=t[0].size
+				# acc_valid=corr_valid*1.0/total_pix
+				# 
+				# 
 				# corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
 				# acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
-				print 'Validation',' Batch:',reader_valid.batch_num,' Accuracy:',acc_valid;
-				f_train.write('Validation'+' Batch: '+str(reader_valid.batch_num)+' Accuracy:'+str(acc_valid)+'\n');
+				# print 'Validation',' Batch:',reader_valid.batch_num,' Accuracy:',acc_valid;
+				# f_train.write('Validation'+' Batch: '+str(reader_valid.batch_num)+' Accuracy:'+str(acc_valid)+'\n');
 
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
