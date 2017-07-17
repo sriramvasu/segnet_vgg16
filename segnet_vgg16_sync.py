@@ -326,6 +326,11 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer());
 	print 'initialized vars';
 	plt.ion()
+
+	file=open(os.path.join('match_labels.txt'))
+	match_labels=file.readlines()
+	file.close()
+	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	# h = h5py.File('tf_data1.h5', 'w')
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
@@ -338,13 +343,13 @@ def test_segnet():
 		# print pred
 		# print test_label_batch
 
-		print 'pred stats'
-		for i in range(num_classes):
-			print np.where(pred==i)[0].size
+		# print 'pred stats'
+		# for i in range(num_classes):
+		# 	print np.where(pred==i)[0].size
 
-		print 'label stats'
-		for i in range(num_classes):
-			print np.where(test_label_batch==i)[0].size
+		# print 'label stats'
+		# for i in range(num_classes):
+		# 	print np.where(test_label_batch==i)[0].size
 
 		corr=np.where(test_label_batch==pred)[0].size;
 		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
