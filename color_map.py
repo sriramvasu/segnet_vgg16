@@ -4,7 +4,6 @@ Official Matlab version can be found in the PASCAL VOC devkit
 http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html#devkit
 """
 
-#new change can you see?
 import numpy as np
 from skimage.io import imshow
 import matplotlib.pyplot as plt
