@@ -309,15 +309,15 @@ def train_segnet():
 	base_lr=1e-6
 	img_size=[360,480]
 
-	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
-	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
-	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
-	train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
-	train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
-	test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
-	test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
+	# train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
+	# train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
+	# test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
+	# test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
 
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3]);
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3]);
@@ -336,6 +336,12 @@ def train_segnet():
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
 
+	file=open(os.path.join('match_labels.txt'))
+	match_labels=file.readlines()
+	file.close()
+	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+	net.match_labels=match_labels
+
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes);
 	learning_rate=tf.train.exponential_decay(base_lr,count,1,0.5)
 	net.train(learning_rate);
@@ -350,10 +356,6 @@ def train_segnet():
 	print 'initialized vars';
 	cnt=0;
 
-	file=open(os.path.join('match_labels.txt'))
-	match_labels=file.readlines()
-	file.close()
-	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 
 	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
