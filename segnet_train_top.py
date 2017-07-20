@@ -282,9 +282,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -299,7 +299,7 @@ class Segnet():
 		return conv1_1_D;
 
 def train_segnet():
-	num_classes=12
+	num_classes=8
 	n_epochs=100
 	batch_size_train=3
 	batch_size_valid=1
@@ -389,13 +389,14 @@ def train_segnet():
 def transform_labels(pred1,label_img,match_labels,num_classes):
 	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
 	pred=pred1[valid_labels]
+	label_img=label_img[valid_labels]
 	
 	modpred_img=pred[:]
 	for cl in range(num_classes):
 		t=np.where(pred==cl)
 		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
-	non_exist=np.where(label_img==11)[0].size
+	# non_exist=np.where(label_img==11)[0].size
 	total_pix=modpred_img.size-non_exist
 	return [corr_pix,total_pix]
 
