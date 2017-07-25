@@ -3,6 +3,7 @@ import numpy as np
 from image_reader import image_reader
 import os
 from utils_mod import *
+import h5py
 
 
 class DCGAN():
@@ -16,212 +17,191 @@ class DCGAN():
 			self.pretrained=True;
 			self.params=Param_loader(weights_path);
 
-	def inference(self,x,z,is_training):
-		self.x=x;
-		self.z=z;
-		self.is_training=is_training;
-		self.z_shape=tf.shape(z);
-		self.x_shape=tf.shape(x);
-		gen_out=self.build_Generator()
-		disc_out=self.build_Discriminator()
-		gen_loss=calc_loss_generator()
-		disc_loss=calc_loss_discriminator()
+	def inference(self,z,x=None,is_training=False,reuse=False):
+		# self.x=x;
+		self.z=z
+		self.is_training=is_training
+		self.batch_size_z=self.z.get_shape().as_list()
+		self.reuse=reuse
+		self.gen_out=self.Generator(self.z)
+		self.disc_out_generated=self.Discriminator(self.gen_out)
+		if x is not None:
+			self.x=x
+			self.disc_out_images=self.Discriminator(self.x)
+		# self.disc_out_images
+
+	def train(self,x,is_training=True,reuse=False):
+		self.x=x
+		self.batch_size_x=self.x.get_shape().as_list()
+		self.is_training=is_training
+		self.reuse=reuse
+		self.disc_out_images=self.Discriminator(self.x)
+		self.gen_loss=self.calc_loss_generator()
+		self.disc_loss=self.calc_loss_discriminator()
+
+		disc_var_names=fnmatch.filter([v.name for v in tf.trainable_variables()],'discriminator*')
+		self.disc_vars=[tf.get_variable(name=name) for name in disc_var_names]
+
+		gen_var_names=fnmatch.filter([v.name for v in tf.trainable_variables()],'generator*')
+		self.gen_vars=[tf.get_variable(name=name) for name in gen_var_names]
+
+		self.train_discriminator()
+		self.train_generator()
 
 
 
 	def train_discriminator():
+		opt = tf.train.AdamOptimizer(learning_rate)
+		gradvar_list=opt.compute_gradients(self.disc_loss,var_list=self.disc_vars)
+		self.disc_train_op=opt.apply_gradients(gradvar_list)
+
 		
 	def train_generator():
+		opt = tf.train.AdamOptimizer(learning_rate)
+		gradvar_list=opt.compute_gradients(self.gen_loss,var_list=self.gen_vars)
+		self.gen_train_op=opt.apply_gradients(gradvar_list)
 
 
-	def calc_loss_generator(self,gen_out,labels,num_classes,weighted=False,weights=None):
+	def calc_loss_generator(self,num_classes=2,weighted=False,weights=None):
 		epsilon = tf.constant(value=1e-10)
-		labels=tf.reshape(tf.one_hot(tf.reshape(labels,[-1]),num_classes),[-1,num_classes]);
-		logits=tf.reshape(logits,[-1,num_classes]);
+		gen_labels=tf.ones([self.batch_size_z])
+		gen_logits=self.disc_out_generated
+
+		gen_labels=tf.reshape(tf.one_hot(tf.reshape(labels,[-1]),num_classes),[-1,num_classes]);
+		gen_logits=tf.reshape(logits,[-1,num_classes]);
 		if(weighted==False):
 			# cross_entropy=tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy');
 			# cross_entropy_mean=tf.reduce_mean(cross_entropy);
-			softmax=tf.nn.softmax(logits+epsilon);
-			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1);
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
+			softmax=tf.nn.softmax(logits+epsilon)
+			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1)
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
 
 		else:
-			softmax=tf.nn.softmax(logits+epsilon);
-			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1);
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
-		tf.add_to_collection('losses', cross_entropy_mean);
+			softmax=tf.nn.softmax(logits+epsilon)
+			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1)
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
+		tf.add_to_collection('losses', cross_entropy_mean)
 		loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-		return loss;
+		return loss
 
 
-	def calc_loss_discriminator(self,disc_out,disc_labels,num_classes,weighted=False,weights=None):
+	def calc_loss_discriminator(self,num_classes=2,weighted=False,weights=None):
 		epsilon = tf.constant(value=1e-10)
-		disc_labels=tf.reshape(tf.one_hot(tf.reshape(disc_labels,[-1]),num_classes),[-1,num_classes]);
-		logits=tf.reshape(logits,[-1,num_classes]);
+		disc_labels=tf.concat([tf.zeros([self.batch_size_z]),tf.ones([self.batch_size_x])],0)
+		disc_logits=tf.concat([self.disc_out_generated,self.disc_out_images])
+
+		disc_labels=tf.reshape(tf.one_hot(tf.reshape(disc_labels,[-1]),num_classes),[-1,num_classes])
+		disc_output=tf.reshape(disc_output,[-1,num_classes])
 		if(weighted==False):
-			cross_entropy=tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy');
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
+			# cross_entropy=tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy');
+			# cross_entropy_mean=tf.reduce_mean(cross_entropy);
+			softmax=tf.nn.softmax(disc_output+epsilon)
+			cross_entropy=-1*tf.reduce_sum(disc_labels*tf.log(softmax+epsilon),axis=1)
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
+
 		else:
-			softmax=tf.nn.softmax(logits+epsilon);
-			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1);
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
-		tf.add_to_collection('losses', cross_entropy_mean);
+			softmax=tf.nn.softmax(disc_output+epsilon)
+			cross_entropy=-1*tf.reduce_sum(tf.mul(disc_labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1)
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
+		tf.add_to_collection('losses', cross_entropy_mean)
 		loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
 		return loss;
 
 
-	def build_Generator(self):
+	def Generator(self,gen_input):
+		self.gen_input=gen_input
+		# generator input shape bsx100
+		# generator output shape bsxhxw
 		with tf.variable_scope('generator'):
-			z_proj=fc_flatten(self.z, np.prod([4,4,1024]), 'reshape', phase_train=self.is_training)
-			ups1_1=upscore_layer(z_proj, [2,2], [2,2], 512, 'deconv1_1');
-			ups1_2=conv_bn(ups1_1, [3,3], 512, [1,1], 'conv1_2', self.is_training)
-			ups1_3=conv_bn(ups1_2, [3,3], 512, [1,1], 'conv1_3', self.is_training);
-
+			print_shape(self.gen_input)
+			z_proj=fc_flatten(self.gen_input, np.prod([7,7,256]),name='fc_layer', phase_train=self.is_training,reuse=self.reuse)
+			z_img=tf.reshape(z_proj,[-1,7,7,256])
+			# ups1_1=upscore_layer(z_img, [2,2], [2,2], 256, 'deconv1_1');
+			ups1_1=upsample(z_img)
+			ups1_2=conv_bn(ups1_1, [3,3], 256, [1,1], 'conv1_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			ups1_3=conv_bn(ups1_2, [3,3], 256, [1,1], 'conv1_3', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			print_shape(ups1_3)
 			# layer 2
-			ups2_1=upscore_layer(ups1_3, [2,2], [2,2], 256, 'deconv2_1');
-			ups2_2=conv_bn(ups2_1, [3,3], 256, [1,1], 'conv2_2', self.is_training);
-			ups2_3=conv_bn(ups2_2, [3,3], 256, [1,1], 'conv2_3', self.is_training);
-
-			ups2_1=upscore_layer(ups1_3, [2,2], [2,2], 128, 'deconv3_1');
-			ups2_2=conv_bn(ups2_1, [3,3], 128, [1,1], 'conv2_2', self.is_training);
-			ups2_3=conv_bn(ups2_2, [3,3], 128, [1,1], 'conv2_3', self.is_training);
-
-			ups3_1=upscore_layer(ups1_3, [2,2], [2,2], 3, 'deconv4_1');
-			ups3_2=conv_bn(ups2_1, [3,3], 3, [1,1], 'conv2_2', self.is_training);
-			ups3_3=conv_bn(ups2_2, [3,3], 3, [1,1], 'conv2_3', self.is_training);
-			self.gen_out=ups3_3
-		return gen_out
+			# ups2_1=upscore_layer(ups1_3, [2,2], [2,2], 256, 'deconv2_1');
+			ups2_1=upsample(ups1_3)
+			ups2_2=conv_bn(ups2_1, [3,3], 128, [1,1], 'conv2_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			ups2_3=conv_bn(ups2_2, [3,3], 128, [1,1], 'conv2_3', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			print_shape(ups2_3)
 
 
-	def build_Discriminator(self):
+			# ups2_1=upscore_layer(ups1_3, [2,2], [2,2], 128, 'deconv3_1');
+			ups3_1=upsample(ups2_3)
+			ups3_2=conv_bn(ups3_1, [3,3], 64, [1,1], 'conv3_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			ups3_3=conv_bn(ups3_2, [3,3], 64, [1,1], 'conv3_3', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			print_shape(ups3_3)
+
+			# ups4_1=upscore_layer(ups3_3, [2,2], [2,2], 3, 'deconv4_1');
+			ups4_1=upsample(ups3_3)
+			ups4_2=conv_bn(ups4_1, [3,3], 32, [1,1], 'conv4_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			ups4_3=conv_bn(ups4_2, [3,3], 1, [1,1], 'conv4_3', self.is_training,reuse=self.reuse,batch_norm=False,activation='sigmoid')
+			print_shape(ups4_3)
+
+			self.gen_output=ups4_3
+			print_shape(self.gen_output)
+		return self.gen_output
+
+
+	def Discriminator(self,disc_input):
+		self.disc_input=disc_input
+		# disc input shape bsxhxw
+		# disc output shape bsx2
 		with tf.variable_scope('discriminator'):
-			conv1_1=conv_bn(ups1_1, [3,3], 512, [1,1], 'conv1_1', self.is_training)
-			conv1_2=conv_bn(ups1_2, [3,3], 512, [1,1], 'conv1_2', self.is_training);
+			conv1_1=conv_bn(disc_input, [3,3], 256, [1,1], 'conv1_1', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv1_2=conv_bn(conv1_1, [3,3], 256, [1,1], 'conv1_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv1_2=tf.nn.max_pool(conv1_2,[1,2,2,1],[1,2,2,1],'SAME')
+			print_shape(conv1_2)
 
 			# layer 2
-			conv2_1=conv_bn(ups2_1, [3,3], 256, [1,1], 'conv2_1', self.is_training);
-			conv2_2=conv_bn(ups2_2, [3,3], 256, [1,1], 'conv2_2', self.is_training);
-
-			conv3_1=conv_bn(ups2_1, [3,3], 128, [1,1], 'conv3_1', self.is_training);
-			conv3_2=conv_bn(ups2_2, [3,3], 128, [1,1], 'conv3_2', self.is_training);
-
-			ups3_1=upscore_layer(ups1_3, [2,2], [2,2], 3, 'deconv4_1');
-			ups3_2=conv_bn(ups2_1, [3,3], 3, [1,1], 'conv2_2', self.is_training);
-			ups3_3=conv_bn(ups2_2, [3,3], 3, [1,1], 'conv2_3', self.is_training);
-			self.gen_out=ups3_3
-		return gen_out
+			conv2_1=conv_bn(conv1_2, [3,3], 128, [1,1], 'conv2_1', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv2_2=conv_bn(conv2_1, [3,3], 128, [1,1], 'conv2_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv2_2=tf.nn.max_pool(conv2_2,[1,2,2,1],[1,2,2,1],'SAME')
+			print_shape(conv2_2)
 
 
+			conv3_1=conv_bn(conv2_2, [3,3], 64, [1,1], 'conv3_1', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv3_2=conv_bn(conv3_1, [3,3], 64, [1,1], 'conv3_2', self.is_training,reuse=self.reuse,activation='leakyrelu')
+			conv3_2=tf.nn.max_pool(conv3_2,[1,2,2,1],[1,2,2,1],'SAME')
+			print_shape(conv3_2)
+
+
+			conv4_1=conv_bn(conv3_2, [3,3], 32, [1,1], 'conv4_2', self.is_training,reuse=self.reuse)
+			conv4_2=conv_bn(conv4_1, [3,3], 32, [1,1], 'conv4_3', self.is_training,reuse=self.reuse)
+			conv4_2=tf.nn.max_pool(conv4_2,[1,2,2,1],[1,2,2,1],'SAME')
+			print_shape(conv4_2)
+
+
+			flat1_1=fc_flatten(conv4_2,100,'fc1',self.is_training,reuse=self.reuse)
+			flat1_2=fc_flatten(flat1_1,2,'fc2',self.is_training,reuse=self.reuse)
+			self.disc_output=flat1_2
+			print_shape(self.disc_output)
+
+		return self.disc_output
+
+
+def train_DCGAN():
+	f=h5py.File('/home/sriram/intern/mnist.h5','r')
+	x_train=f['x_train'][:]
+	y_train=f['y_train'][:]
+	batch_size=5
+	train_data=tf.placeholder(dtype=tf.float32,shape=[batch_size,112,112,1])
+	random_vector=tf.placeholder(dtype=tf.float32,shape=[batch_size,100])
+	train_labels=tf.placeholder(dtype=tf.int32,shape=[batch_size])
+
+	gan=DCGAN()
+	gan.inference(random_vector,reuse=False)
+	gan.train(train_data,is_training=False,reuse=True)
 
 
 
-def train_segnet():
-	# max_steps=FLAGS.max_steps;
-	# batch_size=FLAGS.batch_size;
-	# train_dir=FLAGS.train_dir;
-	# test_dir=FLAGS.test_dir;
-	# image_size=FLAGS.img_size;
 
-	# num_classes=12;
-	# n_epochs=100;
-	# batch_size=6;
-	# batch_size_valid=1;
-	# save_every=6;
-	# validate_every=3;
-	# base_lr=1e-4;
-	reader=image_reader(train_data_dir,train_label_dir,batch_size);
-	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid);
-
-	image_size=reader.image_size;
-	n_batches=reader.n_batches;
-
-
-	sess=tf.Session();
-
-
-	phase_train = tf.placeholder(tf.bool,name='phase_train');
-	count=tf.placeholder(tf.int32,shape=[]);
-	
-	net=DCGAN(keep_prob=0.5,is_gpu=False,weights_path=None);
-	net.inference(train_data,phase_train);
-	# valid_logits=net.inference(valid_data,phase_train);
-	print 'built network';
-
-	net.loss=net.calc_loss(net.logits,train_labels,net.num_classes);
-	learning_rate=tf.train.exponential_decay(base_lr,count,n_epochs*n_batches,0.4)
-	net.train(learning_rate);
-	prediction=tf.argmax(net.logits,axis=3);
-	# accuracy=tf.size(tf.where(prediction==train_labels)[0]);
-	saver=tf.train.Saver(tf.trainable_variables())
-
-	sess.run(tf.global_variables_initializer());
-	print 'initialized vars';
-	cnt=0;
-	while(reader.epoch<n_epochs):
-
-
-		[train_data_batch,train_label_batch]=reader.next_batch();
-		feed_dict_train={phase_train:True,train_data:train_data_batch,train_labels:train_label_batch,count:cnt};
-		[logits,loss,pred]=sess.run([net.logits,net.loss,prediction],feed_dict=feed_dict_train);
-		corr=np.where(train_label_batch==pred)[0].size;
-		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size);
-		sess.run(net.train_op,feed_dict=feed_dict_train);
-		
-		if((reader.epoch+1)%save_every==0):
-			saver.save(sess,'segnet_model',global_step=(reader.epoch+1))
-		print 'learning rate:', sess.run(learning_rate,feed_dict={count:cnt}),'epoch:',reader.epoch+1,'Batch:',reader.batch_num, 'correct pixels:', corr, 'Accuracy:',acc;
-		
-		if((reader.epoch+1)%validate_every==0):
-			print 'validating..';
-			while(reader_valid.epoch==0):
-				[valid_data_batch,valid_label_batch]=reader_valid.next_batch();
-				feed_dict_validate={phase_train:False,train_data:valid_data_batch,train_labels:valid_label_batch};
-				pred_valid=sess.run([prediction],feed_dict=feed_dict_validate);
-				corr_valid=np.where(valid_label_batch==pred_valid)[0].size;
-				acc_valid=corr_valid*1.0/(np.prod(image_size[:-1])*batch_size_valid);
-				print 'Validation ','Batch:',reader_valid.batch_num, 'correct pixels:', corr_valid, 'Accuracy:',acc_valid;
-
-		cnt=cnt+1
-
-
-def test_segnet():
-	# max_steps=FLAGS.max_steps;
-	# batch_size=FLAGS.batch_size;
-	# train_dir=FLAGS.train_dir;
-	# test_dir=FLAGS.test_dir;
-	# image_size=FLAGS.img_size;
-	num_classes=12;
-	n_epochs=10;
-	batch_size=6;
-	train_data_dir='SegNet-Tutorial/CamVid/train/'
-	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
-	test_data_dir='SegNet-Tutorial/CamVid/test/'
-	test_label_dir='SegNet-Tutorial/CamVid/testannot/'
-	reader=image_reader(test_data_dir,test_label_dir,batch_size);
-	image_size=reader.image_size;
-
-	sess=tf.Session();
-	test_data = tf.placeholder(tf.float32,shape=[batch_size, image_size[0], image_size[1], image_size[2]])
-	test_labels = tf.placeholder(tf.int64, shape=[batch_size, image_size[0], image_size[1]])
-	phase_train = tf.placeholder(tf.bool, name='phase_train');
-
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path='vgg16.npy');
-	net.inference(test_data,phase_train);
-	print 'built network';
-	prediction=tf.argmax(net.logits,axis=3);
-	# accuracy=tf.size(tf.where(prediction==test_labels)[0]);
-	sess.run(tf.global_variables_initializer());
-	print 'initialized vars';
-	while(reader.epoch==0):
-		[test_data_batch,test_label_batch]=reader.next_batch();
-
-		feed_dict={phase_train:False,test_data:test_data_batch,test_labels:test_label_batch};
-		[logits,pred]=sess.run([net.logits,prediction],feed_dict=feed_dict);
-		corr=np.where(test_label_batch==pred)[0].size;
-		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size);
-
-		print 'epoch:',reader.epoch+1,'Batch:',reader.batch_num, 'correct pixels:', corr, 'Accuracy:',acc
-
+def next_batch(x_train,batch_size):
+	index=np.random.randint(0,x_train.shape[0],batch_size)
+	return sp.imresize(x_train[index,:].reshape([batch_size,28,28]),[112,112],interp='nearest')
 
 os.environ['CUDA_VISIBLE_DEVICES']="";
-train_segnet()
+train_DCGAN()
