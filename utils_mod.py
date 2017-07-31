@@ -59,8 +59,6 @@ def get_deconv_filter(self, f_shape):
 	for i in range(f_shape[2]):
 		weights[:, :, i, i] = bilinear
 	return weights
-	# init = tf.constant_initializer(value=weights,dtype=tf.float32)
-	# return tf.get_variable(name="up_filter", initializer=init,shape=weights.shape)
 
 
 def get_deconv_weights(params,shape,layer_name,var_name,stddev=1):
@@ -72,25 +70,20 @@ def get_deconv_weights(params,shape,layer_name,var_name,stddev=1):
 		else:
 			if layer_name in params.layer_names:
 				print 'loading pretrained weight for ',layer_name,'with shape:',shape;
-				# print np.transpose(params.weight_data[layer_name,'0'],transposer).reshape(shape)
 				wt=tf.get_variable(trainable=False,initializer=tf.constant_initializer(params.weight_data[layer_name,'0'].reshape(shape)),shape=shape,name=var_name);
 			else:
 				rt=get_deconv_filter(shape)
 				wt=tf.get_variable(initializer=tf.constant_initializer(value=rt,dtype=tf.float32),shape=shape,name=var_name)
-				# wt=tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
 			return wt;
 
 
 def get_weights(params,shape,layer_name,var_name,trainable,stddev=1):
-	# params.transposer=[3,2,1,0];
 	params.transposer=[2,3,1,0]
-	# with tf.variable_scope(var_name):
 	if(params.pretrained==False):
 		return tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
 	else:
 		if layer_name in params.layer_names:
 			print 'loading pretrained weight for ',layer_name,'with shape:',shape;
-			# print np.transpose(params.weight_data[layer_name,'0'],transposer).reshape(shape)
 			wt=tf.get_variable(trainable=trainable,initializer=tf.constant_initializer(np.transpose(params.weight_data[layer_name,'0'],params.transposer)),shape=shape,name=var_name);
 		else:
 			wt=tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
@@ -99,7 +92,6 @@ def get_weights(params,shape,layer_name,var_name,trainable,stddev=1):
 
 
 def get_biases(params,shape,var_name,layer_name,trainable,val=1.0):
-	# with tf.variable_scope(layer_name):
 	if(params.pretrained==False):
 		return tf.get_variable(initializer=tf.constant_initializer(val),shape=shape,name=var_name);
 	else:
@@ -110,8 +102,6 @@ def get_biases(params,shape,var_name,layer_name,trainable,val=1.0):
 		else:
 			bias=tf.get_variable(initializer=tf.constant_initializer(val),shape=shape,name=var_name);
 		return bias;
-
-
 
 def max_pool(x,k_shape,strides,name,padding='VALID'):
 	with tf.variable_scope(name):
@@ -252,9 +242,6 @@ def upsample_with_pool_mask(updates, mask, ksize=[1, 2, 2, 1],out_shape=None,nam
 	return ret
 
 
-
-
-	
 def xavier_initializer(kernel_size,num_filters):
 	stddev = math.sqrt(2. / (kernel_size**2 * num_filters))
 	return tf.truncated_normal_initializer(stddev=stddev)
@@ -262,21 +249,21 @@ def xavier_initializer(kernel_size,num_filters):
 def upscore_layer(x,k_shape,stride,out_channels,name,phase_train,reuse=False,out_shape=None,padding='SAME',params=Param_loader(),trainable=False):
 	# Trainable parameter controls if the variable found in weights file should be further trained.
 	with tf.variable_scope(name,reuse=reuse):
-		in_shape=tf.shape(x);
-		in_channels=int(x.get_shape().as_list()[-1]);
+		in_shape=x.get_shape().as_list()
+		in_channels=int(x.get_shape().as_list()[-1])
 		kernel=get_weights(params,[k_shape[0],k_shape[1],out_channels,in_channels],var_name='deconv_filters',layer_name=name,stddev=1e-1,trainable=trainable)
 		bias=get_biases(params,[out_channels],var_name='deconv_bias',layer_name=name,trainable=trainable);
 		if(out_shape==None):
 			if(padding=='VALID'):
 				h=(in_shape[1]-1)*stride[0]+k_shape[0];
 				w=(in_shape[2]-1)*stride[1]+k_shape[1];
-				shape=tf.stack([in_shape[0],h,w,out_channels]);
+				shape=np.stack([in_shape[0],h,w,out_channels]);
 			elif(padding=='SAME'):
 				h=(in_shape[1]-1)*stride[0]+1;
 				w=(in_shape[2]-1)*stride[1]+1;
-				shape=tf.stack([in_shape[0],h,w,out_channels]);
+				shape=np.stack([in_shape[0],h,w,out_channels]);
 		else:
-			shape=tf.stack([in_shape[0],out_shape[1],out_shape[2],out_channels]);
+			shape=np.stack([in_shape[0],out_shape[1],out_shape[2],out_channels]).astype(np.int32)
 		# if(groups==1):
 		c1=tf.nn.conv2d_transpose(x,kernel,output_shape=shape,strides=[1,stride[0],stride[1],1],padding=padding);
 		# else:
