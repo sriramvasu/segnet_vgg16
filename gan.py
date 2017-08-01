@@ -130,8 +130,8 @@ class DCGAN():
 			print_shape(self.gen_input)
 			z_proj=fc_flatten(self.gen_input, np.prod([7,7,256]),name='fc_layer', phase_train=self.is_training,reuse=self.reuse)
 			z_img=tf.reshape(z_proj,[-1,7,7,256])
-			# ups1_1=upscore_layer(z_img, [2,2], [2,2], 256, 'deconv1_1',phase_train=self.is_training,reuse=reuse)
-			ups1_1=upsample(z_img)
+			ups1_1=upscore_layer(z_img, [2,2], [2,2], 256, 'deconv1_1',phase_train=self.is_training,reuse=reuse,out_shape=[0,14,14,0])
+			# ups1_1=upsample(z_img)
 			ups1_2=conv_bn(ups1_1, [3,3], 256, [1,1], 'conv1_2', self.is_training,reuse=reuse,activation='leakyrelu')
 			ups1_3=conv_bn(ups1_2, [3,3], 256, [1,1], 'conv1_3', self.is_training,reuse=reuse,activation='leakyrelu')
 			print_shape(ups1_3)
@@ -145,8 +145,8 @@ class DCGAN():
 			print_shape(ups2_3)
 
 
-			# ups3_1=upscore_layer(ups2_3, [2,2], [2,2], 128, 'deconv3_1',phase_train=self.is_training,reuse=reuse)
-			ups3_1=upsample(ups2_3)
+			ups3_1=upscore_layer(ups2_3, [2,2], [2,2], 128, 'deconv3_1',phase_train=self.is_training,reuse=reuse,out_shape=[0,28,28,0])
+			# ups3_1=upsample(ups2_3)
 			ups3_2=conv_bn(ups3_1, [3,3], 64, [1,1], 'conv3_2', self.is_training,reuse=reuse,activation='leakyrelu')
 			ups3_3=conv_bn(ups3_2, [3,3], 64, [1,1], 'conv3_3', self.is_training,reuse=reuse,activation='leakyrelu')
 			print_shape(ups3_3)
@@ -204,10 +204,12 @@ def train_DCGAN():
 	f=h5py.File('mnist.h5','r')
 	x_train=f['x_train'][:]
 	y_train=f['y_train'][:]
+	x_train=x_train.astype(np.float32)/127
 	batch_size=50
+	save_every=1
 	rand_vect_size=100
 	gen_base_lr=1e-6
-	disc_base_lr=1e-6
+	disc_base_lr=1e-5
 	train_data=tf.placeholder(dtype=tf.float32,shape=[batch_size,28,28,1])
 	random_vector=tf.placeholder(dtype=tf.float32,shape=[batch_size,rand_vect_size])
 	train_labels=tf.placeholder(dtype=tf.int32,shape=[batch_size])
@@ -221,23 +223,28 @@ def train_DCGAN():
 	n_batches=x_train.shape[0]/batch_size
 	sess=tf.Session()
 	sess.run(tf.global_variables_initializer())
-	get_varnames(gan.gen_vars)
-	get_varnames(gan.disc_vars)
+	# save_npy(gan.gen_vars,sess,'gen_vars',0)
+	# save_npy(gan.disc_vars,sess,'disc_vars',0)
+	for i in range(n_epochs):
+		for j in range(n_batches):
+			feed_dict={random_vector:np.random.standard_normal([batch_size,rand_vect_size]),train_data:next_batch(x_train,batch_size),count:0}
+			[_,g_loss]=sess.run([gan.gen_train_op,gan.gen_loss],feed_dict)
+			[_,d_loss]=sess.run([gan.disc_train_op,gan.disc_loss],feed_dict)
 
-	save_hdf5(sess.run(gan.gen_vars),[i.name for i in gan.gen_vars],'gen-vars',0)
-	save_hdf5(sess.run(gan.disc_vars),[i.name for i in gan.disc_vars],'disc-vars',0)
+			feed_dict[random_vector]=np.random.standard_normal([batch_size,rand_vect_size])
+			[_,g_loss]=sess.run([gan.gen_train_op,gan.gen_loss],feed_dict)
+			print 'epoch:',i,'batch:',j,'gen_loss:',g_loss,'disc_loss:',d_loss
+		if((i+1)%save_every==0):
+			save_npy(gan.gen_vars,sess,'gen_vars',i+1)
+			save_npy(gan.disc_vars,sess,'disc_vars',i+1)
 
-	# for i in range(n_epochs):
-	# 	for j in range(n_batches):
-	# 		feed_dict={random_vector:np.random.standard_normal([batch_size,rand_vect_size]),train_data:next_batch(x_train,batch_size),count:0}
-	# 		[_,d_loss]=sess.run([gan.disc_train_op,gan.disc_loss],feed_dict)
-	# 		[_,g_loss]=sess.run([gan.gen_train_op,gan.gen_loss],feed_dict)
-	# 		# feed_dict[random_vector]=np.random.standard_normal([batch_size,rand_vect_size])
-	# 		# [_,g_loss]=sess.run([gan.gen_train_op,gan.gen_loss],feed_dict)
-
-	# 		print 'epoch:',i,'batch:',j,'gen_loss:',g_loss,'disc_loss:',d_loss
-	read_hdf5('gen-vars',0)	
-	read_hdf5('disc-vars',0)	
+	
+def save_npy(list_vars,sess,base_name,suffix):
+	rt=dict()
+	for i in list_vars:
+		rt[i.name]=sess.run(i)
+	filename=base_name+str(suffix)+'.npy'
+	np.save(filename,rt)
 			
 def save_hdf5(list_vars,list_names,base_name,suffix):
 	filename=base_name+str(suffix)+'.h5'
@@ -245,6 +252,7 @@ def save_hdf5(list_vars,list_names,base_name,suffix):
 	for i,name in zip(list_vars,list_names):
 		f.create_dataset(name,data=i)
 	f.close()
+
 def read_hdf5(base_name,suffix):
 	filename=base_name+str(suffix)+'.h5'
 	f=h5py.File(filename,'r')
@@ -252,6 +260,7 @@ def read_hdf5(base_name,suffix):
 	for i in keys:
 		print f[i][:].shape
 	f.close()
+
 def get_varnames(list_vars):
 	for i in list_vars:
 		print i.name

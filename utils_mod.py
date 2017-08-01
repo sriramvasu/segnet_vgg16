@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from math import ceil
 import scipy.misc as sp
 try:
   import h5py
@@ -45,7 +46,7 @@ class Param_loader():
 		else:
 			self.pretrained=False;
 
-def get_deconv_filter(self, f_shape):
+def get_deconv_filter(f_shape):
 	width = f_shape[0]
 	heigh = f_shape[0]
 	f = ceil(width/2.0)
@@ -61,7 +62,7 @@ def get_deconv_filter(self, f_shape):
 	return weights
 
 
-def get_deconv_weights(params,shape,layer_name,var_name,stddev=1):
+def get_deconv_weights(params,shape,layer_name,var_name,trainable,stddev=1):
 	with tf.variable_scope(var_name):
 		if(params.pretrained==False):
 			rt=get_deconv_filter(shape)
@@ -70,7 +71,7 @@ def get_deconv_weights(params,shape,layer_name,var_name,stddev=1):
 		else:
 			if layer_name in params.layer_names:
 				print 'loading pretrained weight for ',layer_name,'with shape:',shape;
-				wt=tf.get_variable(trainable=False,initializer=tf.constant_initializer(params.weight_data[layer_name,'0'].reshape(shape)),shape=shape,name=var_name);
+				wt=tf.get_variable(trainable=trainable,initializer=tf.constant_initializer(params.weight_data[layer_name,'0'].reshape(shape)),shape=shape,name=var_name);
 			else:
 				rt=get_deconv_filter(shape)
 				wt=tf.get_variable(initializer=tf.constant_initializer(value=rt,dtype=tf.float32),shape=shape,name=var_name)
@@ -224,6 +225,8 @@ def upsample(x,k_shape=[2,2],name='upsample',out_shape=None):
 	output=tf.scatter_nd(new_indices,updates,tf.cast(shape,tf.int64))
 	return output
 
+def downsample(x,k_shape=[2,2],name='downsample',out_shape=None):
+	return x[:,0::k_shape[0],0::k_shape[1],:]
 def upsample_with_pool_mask(updates, mask, ksize=[1, 2, 2, 1],out_shape=None,name=None):
 	input_shape = updates.get_shape().as_list()
 	if out_shape is None:
@@ -251,17 +254,17 @@ def upscore_layer(x,k_shape,stride,out_channels,name,phase_train,reuse=False,out
 	with tf.variable_scope(name,reuse=reuse):
 		in_shape=x.get_shape().as_list()
 		in_channels=int(x.get_shape().as_list()[-1])
-		kernel=get_weights(params,[k_shape[0],k_shape[1],out_channels,in_channels],var_name='deconv_filters',layer_name=name,stddev=1e-1,trainable=trainable)
+		kernel=get_deconv_weights(params,[k_shape[0],k_shape[1],out_channels,in_channels],var_name='deconv_filters',layer_name=name,stddev=1e-1,trainable=trainable)
 		bias=get_biases(params,[out_channels],var_name='deconv_bias',layer_name=name,trainable=trainable);
 		if(out_shape==None):
 			if(padding=='VALID'):
 				h=(in_shape[1]-1)*stride[0]+k_shape[0];
 				w=(in_shape[2]-1)*stride[1]+k_shape[1];
-				shape=np.stack([in_shape[0],h,w,out_channels]);
+				shape=np.stack([in_shape[0],h,w,out_channels]).astype(np.int32)
 			elif(padding=='SAME'):
 				h=(in_shape[1]-1)*stride[0]+1;
 				w=(in_shape[2]-1)*stride[1]+1;
-				shape=np.stack([in_shape[0],h,w,out_channels]);
+				shape=np.stack([in_shape[0],h,w,out_channels]).astype(np.int32)
 		else:
 			shape=np.stack([in_shape[0],out_shape[1],out_shape[2],out_channels]).astype(np.int32)
 		# if(groups==1):

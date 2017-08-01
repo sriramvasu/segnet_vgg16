@@ -15,44 +15,44 @@ class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
 		self.num_classes = num_classes
 		self.keep_prob = keep_prob
-		self.is_gpu=is_gpu;
-		self.pretrained=pretrained;
-		self.params=Param_loader();
+		self.is_gpu=is_gpu
+		self.pretrained=pretrained
+		self.params=Param_loader()
 		if weights_path is not None:
-			self.pretrained=True;
-			self.params=Param_loader(weights_path);
+			self.pretrained=True
+			self.params=Param_loader(weights_path)
 
 	def inference(self,x,is_training,reuse):
-		self.x=x;
-		self.is_training=is_training;
-		self.reuse=reuse;
-		self.logits=self.build_network();
-		return self.logits;
+		self.x=x
+		self.is_training=is_training
+		self.reuse=reuse
+		self.logits=self.build_network()
+		return self.logits
 
 	def calc_loss(self,logits,labels,num_classes,weighted=False,weights=None):
 		epsilon = tf.constant(value=1e-10)
 		no_labels=tf.where(tf.logical_and(labels>=0,labels<num_classes))
 		labels=tf.gather_nd(labels,no_labels)
 		logits=tf.gather_nd(logits,no_labels)
-		labels=tf.reshape(tf.one_hot(tf.reshape(labels,[-1]),num_classes),[-1,num_classes]);
-		logits=tf.reshape(logits,[-1,num_classes]);
+		labels=tf.reshape(tf.one_hot(tf.reshape(labels,[-1]),num_classes),[-1,num_classes])
+		logits=tf.reshape(logits,[-1,num_classes])
 		if(weighted==False):
-			cross_entropy=tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy');
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
+			cross_entropy=tf.nn.softmax_cross_entropy_with_logits(labels=labels,logits=logits,name='cross_entropy')
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
 		else:
-			softmax=tf.nn.softmax(logits+epsilon);
-			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1);
-			cross_entropy_mean=tf.reduce_mean(cross_entropy);
-		tf.add_to_collection('losses', cross_entropy_mean);
+			softmax=tf.nn.softmax(logits+epsilon)
+			cross_entropy=-1*tf.reduce_sum(tf.mul(labels*tf.log(softmax+epsilon),weights.reshape([num_classes])),axis=1)
+			cross_entropy_mean=tf.reduce_mean(cross_entropy)
+		tf.add_to_collection('losses', cross_entropy_mean)
 		loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-		return loss;
+		return loss
 
 	def train(self,learning_rate):
-		opt = tf.train.AdamOptimizer(learning_rate);
-		gradvar_list=opt.compute_gradients(self.loss);
-		self.train_op=opt.apply_gradients(gradvar_list);
+		opt = tf.train.AdamOptimizer(learning_rate)
+		gradvar_list=opt.compute_gradients(self.loss)
+		self.train_op=opt.apply_gradients(gradvar_list)
 	def get_shape(self,x):
-		return x.get_shape().as_list();
+		return x.get_shape().as_list()
 
 	def build_network(self):
 
@@ -319,22 +319,22 @@ def train_segnet():
 	# test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
 	# test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
 
-	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3]);
-	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3]);
-	image_size=reader.image_size;
-	n_batches=reader.n_batches;
-	f_train=open('train_log_file','w+');
-	sess=tf.Session();
-	train_data=tf.placeholder(tf.float32,shape=[batch_size_train,image_size[0],image_size[1],image_size[2]]);
-	train_labels=tf.placeholder(tf.int64, shape=[batch_size_train, image_size[0], image_size[1]]);
-	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]]);
-	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
+	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3])
+	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3])
+	image_size=reader.image_size
+	n_batches=reader.n_batches
+	f_train=open('train_log_file','w+')
+	sess=tf.Session()
+	train_data=tf.placeholder(tf.float32,shape=[batch_size_train,image_size[0],image_size[1],image_size[2]])
+	train_labels=tf.placeholder(tf.int64, shape=[batch_size_train, image_size[0], image_size[1]])
+	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]])
+	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
-	print 'built network';
+	print 'built network'
 
 	file=open(os.path.join('match_labels.txt'))
 	match_labels=file.readlines()
@@ -342,30 +342,30 @@ def train_segnet():
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	net.match_labels=match_labels
 
-	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes);
+	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes)
 	learning_rate=tf.train.exponential_decay(base_lr,count,1,0.5)
-	net.train(learning_rate);
-	prediction_train=tf.argmax(train_logits,axis=3);
-	prediction_valid=tf.argmax(valid_logits,axis=3);
+	net.train(learning_rate)
+	prediction_train=tf.argmax(train_logits,axis=3)
+	prediction_valid=tf.argmax(valid_logits,axis=3)
 	# accuracy=tf.size(tf.where(prediction==train_labels)[0]);
 
-	print 'built loss graph';
+	print 'built loss graph'
 	saver=tf.train.Saver(tf.trainable_variables())
-	sess.run(tf.global_variables_initializer());
+	sess.run(tf.global_variables_initializer())
 	# saver.restore(sess,'segnet_model')
-	print 'initialized vars';
-	cnt=0;
+	print 'initialized vars'
+	cnt=0
 
 
 	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
-			[train_data_batch,train_label_batch]=reader.next_batch();
-			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every};
-			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train);
+			[train_data_batch,train_label_batch]=reader.next_batch()
+			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every}
+			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train)
 			[corr,total_pix]=transform_labels(pred,train_label_batch,match_labels,num_classes)
 			acc=corr*1.0/total_pix
 			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
-			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n');
+			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
 
 
 		if((reader.epoch+1)%save_every==0):
@@ -373,10 +373,10 @@ def train_segnet():
 
 		if((reader.epoch+1)%validate_every==0):
 			reader_valid.reset_reader()
-			print 'validating..';
+			print 'validating..'
 			while(reader_valid.batch_num<reader_valid.n_batches):
-				[valid_data_batch,valid_label_batch]=reader_valid.next_batch();
-				feed_dict_validate={valid_data:valid_data_batch,valid_labels:valid_label_batch};
+				[valid_data_batch,valid_label_batch]=reader_valid.next_batch()
+				feed_dict_validate={valid_data:valid_data_batch,valid_labels:valid_label_batch}
 				pred_valid=sess.run(prediction_valid,feed_dict=feed_dict_validate);
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
