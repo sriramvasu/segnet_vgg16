@@ -330,6 +330,10 @@ def train_segnet():
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes);
 	learning_rate=tf.maximum(tf.train.exponential_decay(base_lr,count,1,0.5),1e-7)
 	net.train(learning_rate);
+	learning_rate=tf.train.exponential_decay(base_lr,count,1,0.5)
+	update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+	with tf.control_dependencies(update_ops):
+		net.train(learning_rate);
 	prediction_train=tf.argmax(train_logits,axis=3);
 	prediction_valid=tf.argmax(valid_logits,axis=3);
 	# accuracy=tf.size(tf.where(prediction==train_labels)[0]);
