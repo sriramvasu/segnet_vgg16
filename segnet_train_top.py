@@ -4,10 +4,10 @@ import os
 from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
-# import matplotlib.pyplot as plt
-from color_map import *
 try:
   import h5py
+  import matplotlib.pyplot as plt
+  from color_map import *
 except:
   pass
 
@@ -325,6 +325,7 @@ def train_segnet():
 	n_batches=reader.n_batches
 	f_train=open('train_log_file','w+')
 	sess=tf.Session()
+	
 	train_data=tf.placeholder(tf.float32,shape=[batch_size_train,image_size[0],image_size[1],image_size[2]])
 	train_labels=tf.placeholder(tf.int64, shape=[batch_size_train, image_size[0], image_size[1]])
 	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]])
@@ -397,7 +398,7 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
 	# non_exist=np.where(label_img==11)[0].size
-	total_pix=modpred_img.size-non_exist
+	total_pix=modpred_img.size#-non_exist
 	return [corr_pix,total_pix]
 
 
@@ -571,9 +572,9 @@ if __name__=="__main__":
 	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']="0";
+	  os.environ['CUDA_VISIBLE_DEVICES']="1";
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
   
-  train_segnet()
+	train_segnet()
