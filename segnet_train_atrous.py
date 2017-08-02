@@ -4,10 +4,11 @@ import os
 from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
-# import matplotlib.pyplot as plt
-from color_map import *
+
 try:
   import h5py
+  import matplotlib.pyplot as plt
+  from color_map import *
 except:
   pass
 
@@ -301,7 +302,7 @@ def train_segnet():
 	lr_decay_every=5
 	validate_every=3
 	save_every=10
-	base_lr=5e-5
+	base_lr=1e-6
 	img_size=[360,480]
 
 	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
@@ -326,14 +327,18 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path='/home/sriram/intern/segnet_road.h5');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy'));
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
 
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes);
-	learning_rate=tf.train.exponential_decay(base_lr,count,1,0.5)
+	learning_rate=tf.maximum(tf.train.exponential_decay(base_lr,count,1,0.5),1e-7)
 	net.train(learning_rate);
+	learning_rate=tf.train.exponential_decay(base_lr,count,1,0.5)
+	update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+	with tf.control_dependencies(update_ops):
+		net.train(learning_rate);
 	prediction_train=tf.argmax(train_logits,axis=3);
 	prediction_valid=tf.argmax(valid_logits,axis=3);
 	# accuracy=tf.size(tf.where(prediction==train_labels)[0]);
@@ -393,7 +398,7 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	for i in non_labels:
 		non_exist=non_exist+np.where(label_img==i)[0].size
 	total_pix=modpred_img.size-non_exist
-	print corr_pix,total_pix
+	
 	return [corr_pix,total_pix]
 
 
@@ -567,7 +572,7 @@ if __name__=="__main__":
 	
 	if args.devbox:
 		BASE_DIR = '/root/segnet_vgg16'
-		os.environ['CUDA_VISIBLE_DEVICES']="0";
+		os.environ['CUDA_VISIBLE_DEVICES']="1";
 	else:
 		BASE_DIR = '/home/sriram/intern'
 		os.environ['CUDA_VISIBLE_DEVICES']="";
