@@ -169,7 +169,33 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 			conv_out=activ_function(bias)
 	return conv_out
 
+def atrous_conv(inputT, k_shape, out_channels, dilation_rate, name, phase_train, reuse=False,padding='SAME', activation='none',batch_norm=True,params=Param_loader(),trainable=False):
+	# Trainable parameter controls if the variable found in weights file should be further trained.
+	
+	if(activation=='none'):
+		activ_function=lambda x: x
+	elif(activation=='relu'):
+		activ_function=lambda x: tf.nn.relu(x)
+	elif(activation=='leakyrelu'):
+		activ_function=lambda x: LeakyRelu(x,0.2)
+	elif(activation=='prelu'):
+		activ_function=lambda x: Parametric_Relu(x,name)
+	elif(activation=='sigmoid'):
+		activ_function=lambda x: tf.nn.sigmoid(x)
+	elif(activation=='tanh'):
+		activ_function=lambda x: tf.tanh(x)
 
+	in_channels = inputT.get_shape().as_list()[-1];
+	with tf.variable_scope(name,reuse=reuse):
+		kernel = get_weights(params,var_name='weights', shape=[k_shape[0],k_shape[1],in_channels,out_channels],layer_name=name,trainable=trainable,stddev=1e-1);
+		c1=tf.nn.atrous_conv2d (inputT,kernel,rate=dilation_rate,padding=padding);
+		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
+		bias = tf.nn.bias_add(c1, biases)
+		if batch_norm is True:
+			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+		else:
+			conv_out=activ_function(bias)
+	return conv_out
 
 def batch_norm_layer1(inputT, is_training, scope):
 	return tf.cond(is_training,

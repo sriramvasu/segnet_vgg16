@@ -74,6 +74,7 @@ class Segnet():
 		print_shape(conv1_2)
 
 		conv1_2=downsample(conv1_2,[2,2])
+		# pool1=atrous_conv(conv1_2, [3,3], 64, 2,'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		pool1=conv_bn(conv1_2, [3,3], 64, [1,1],'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 		# if(self.is_gpu==True):
@@ -92,6 +93,7 @@ class Segnet():
 		print_shape(conv2_2);
 
 		conv2_2=downsample(conv2_2,[2,2])
+		# pool2=atrous_conv(conv2_2, [3,3], 128, 2,'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		pool2=conv_bn(conv2_2, [3,3], 128, [1,1],'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 
@@ -116,6 +118,7 @@ class Segnet():
 		print_shape(conv3_3)
 
 		conv3_3=downsample(conv3_3,[2,2])
+		# pool3=atrous_conv(conv3_3, [3,3], 256, 2,'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		pool3=conv_bn(conv3_3, [3,3], 256, [1,1],'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		
 		# if(self.is_gpu==True):
@@ -138,6 +141,7 @@ class Segnet():
 		print_shape(conv4_3)
 
 		conv4_3=downsample(conv4_3,[2,2])
+		# pool4=atrous_conv(conv4_3, [3,3], 512, 2,'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		pool4=conv_bn(conv4_3, [3,3], 512, [1,1],'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 
@@ -161,6 +165,7 @@ class Segnet():
 		print_shape(conv5_3)
 
 		conv5_3=downsample(conv5_3,[2,2])
+		# pool5=atrous_conv(conv5_3, [3,3], 512, 2,'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		pool5=conv_bn(conv5_3, [3,3], 512, [1,1],'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 
