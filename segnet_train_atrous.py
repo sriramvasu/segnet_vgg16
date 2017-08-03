@@ -327,7 +327,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy'));
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'));
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
