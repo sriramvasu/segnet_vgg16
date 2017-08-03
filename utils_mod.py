@@ -164,7 +164,7 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if batch_norm is True:
-			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+			conv_out = batch_norm(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
 		else:
 			conv_out=activ_function(bias)
 	return conv_out
@@ -222,6 +222,42 @@ def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
 		else:
 			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=True,scale=True, updates_collections=None, scope=this_name) 
 
+def batch_norm(input1,is_training,scope,params,reuse,trainable):
+	this_name=scope+'_bn'
+	if(params.pretrained==False):
+		with tf.variable_scope('',reuse=reuse):
+			beta=tf.get_variable(name=scope+'beta',shape=[input1.get_shape().as_list()[-1]],initializer=tf.constant_initializer(0.0))
+			gamma=tf.get_variable(name=scope+'gamma',shape=[input1.get_shape().as_list()[-1]],initializer=tf.constant_initializer(1.0))
+			moving_mean=tf.get_variable(trainable=False,name=scope+'moving_mean',shape=input1.get_shape().as_list()[-1],initializer=tf.constant_initializer)
+			moving_variance=tf.get_variable(trainable=False,name=scope+'moving_variance',shape=input1.get_shape().as_list()[-1],initializer=tf.constant_initializer)
+
+			if(is_training):
+				[mu,variance]=tf.nn.moments(x=input1,axes=[0,1,2])
+				moving_mean=moving_mean*0.99+0.01*mu
+				moving_variance=moving_variance*0.99+0.01*variance
+			else:
+				mu=moving_mean
+				variance=moving_variance
+				
+
+
+
+		return tf.nn.batch_normalization(input1,mu,sigma,beta,gamma,1e-12)
+	else:
+		if(this_name in params.layer_names):
+			print 'pretrained BN param', this_name, 'with shape', params.weight_data[this_name,'0'].shape
+			gamma_init=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]))
+			beta_init=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]))
+			beta=tf.get_variable(name=scope+'beta',initializer=beta_init)
+			gamma=tf.get_variable(name=scope+'gamma',initializer=gamma_init)
+			moving_mean=tf.get_variable(name=scope+'moving_mean',initializer=)
+			[mu,sigma]=tf.nn.moments(x=input1,axes=[0,1,2])
+			return tf.nn.batch_normalization(input1,mu,sigma,beta,gamma,1e-12)
+		else:
+			beta=tf.get_variable(name=scope+'beta',shape=[input1.get_shape().as_list()[-1]],initializer=tf.constant_initializer(0.0))
+			gamma=tf.get_variable(name=scope+'gamma',shape=[input1.get_shape().as_list()[-1]],initializer=tf.constant_initializer(1.0))
+			[mu,sigma]=tf.nn.moments(x=input1,axes=[0,1,2])
+			return tf.nn.batch_normalization(input1,mu,sigma,beta,gamma,1e-12)
 
 def LeakyRelu(x,param):
 	pos_part=tf.nn.relu(x)
