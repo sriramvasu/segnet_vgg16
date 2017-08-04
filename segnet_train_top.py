@@ -253,7 +253,7 @@ class Segnet():
 	    
 
 
-	    # Upsample2
+		# Upsample2
 		if(self.is_gpu==True):
 			pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
 		else:
@@ -286,7 +286,7 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
 		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
@@ -397,9 +397,9 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	label_img=label_img[valid_labels]
 	
 	modpred_img=pred[:]
-	for cl in range(num_classes):
-		t=np.where(pred==cl)
-		modpred_img[t]=int(match_labels[cl][-1])
+	# for cl in range(num_classes):
+	# 	t=np.where(pred==cl)
+	# 	modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
 	# non_exist=np.where(label_img==11)[0].size
 	total_pix=modpred_img.size#-non_exist
