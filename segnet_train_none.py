@@ -330,10 +330,10 @@ def train_segnet():
 	f_train=open('train_log_file','w+')
 	sess=tf.Session()
 	
-	train_data=tf.placeholder(tf.float32,shape=[batch_size_train,image_size[0],image_size[1],image_size[2]])
-	train_labels=tf.placeholder(tf.int64, shape=[batch_size_train, image_size[0], image_size[1]])
-	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]])
-	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
+	train_data=tf.placeholder(tf.float32,shape=[None,image_size[0],image_size[1],image_size[2]])
+	train_labels=tf.placeholder(tf.int64, shape=[None, image_size[0], image_size[1]])
+	valid_data=tf.placeholder(tf.float32,shape=[None,image_size[0],image_size[1],image_size[2]])
+	valid_labels=tf.placeholder(tf.int64, shape=[None, image_size[0], image_size[1]])
 	count=tf.placeholder(tf.int32,shape=[]);
 	
 	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='/home/sriram/intern/segnet_road.h5')
