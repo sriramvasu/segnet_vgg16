@@ -4,6 +4,7 @@ import os
 from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
+import fnmatch
 try:
   import h5py
   import matplotlib.pyplot as plt
@@ -49,8 +50,11 @@ class Segnet():
 
 	def train(self,learning_rate):
 		opt = tf.train.AdamOptimizer(learning_rate)
-		gradvar_list=opt.compute_gradients(self.loss)
-		self.train_op=opt.apply_gradients(gradvar_list)
+		update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+		with tf.control_dependencies(update_ops):
+			gradvar_list=opt.compute_gradients(self.loss)
+			self.train_op=opt.apply_gradients(gradvar_list)
+
 	def get_shape(self,x):
 		return x.get_shape().as_list()
 
@@ -577,4 +581,5 @@ if __name__=="__main__":
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
   
-	train_segnet()
+	# train_segnet()
+	evaluate_segnet_camvid()
