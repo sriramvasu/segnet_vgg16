@@ -51,9 +51,9 @@ class Segnet():
 	def train(self,learning_rate):
 		opt = tf.train.AdamOptimizer(learning_rate)
 		update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-		with tf.control_dependencies(update_ops):
-			gradvar_list=opt.compute_gradients(self.loss)
-			self.train_op=opt.apply_gradients(gradvar_list)
+		# with tf.control_dependencies(update_ops):
+		gradvar_list=opt.compute_gradients(self.loss)
+		self.train_op=opt.apply_gradients(gradvar_list)
 
 	def get_shape(self,x):
 		return x.get_shape().as_list()
@@ -288,7 +288,7 @@ class Segnet():
 		# decode 4
 		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -303,7 +303,7 @@ class Segnet():
 		return conv1_1_D;
 
 def train_segnet():
-	num_classes=8
+	num_classes=12
 	n_epochs=100
 	batch_size_train=3
 	batch_size_valid=1
@@ -341,7 +341,7 @@ def train_segnet():
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network'
 
-	file=open(os.path.join('match_labels.txt'))
+	file=open(os.path.join('lej_match_labels.txt'))
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
@@ -397,9 +397,9 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	label_img=label_img[valid_labels]
 	
 	modpred_img=pred[:]
-	# for cl in range(num_classes):
-	# 	t=np.where(pred==cl)
-	# 	modpred_img[t]=int(match_labels[cl][-1])
+	for cl in range(num_classes):
+		t=np.where(pred==cl)
+		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
 	# non_exist=np.where(label_img==11)[0].size
 	total_pix=modpred_img.size#-non_exist
