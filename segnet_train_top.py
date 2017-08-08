@@ -5,6 +5,7 @@ from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
 import fnmatch
+from color_map import *
 try:
   import h5py
   import matplotlib.pyplot as plt
@@ -303,7 +304,7 @@ class Segnet():
 		return conv1_1_D;
 
 def train_segnet():
-	num_classes=12
+	num_classes=8
 	n_epochs=100
 	batch_size_train=3
 	batch_size_valid=1
@@ -336,7 +337,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='/home/sriram/intern/segnet_road.h5')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network'
@@ -361,6 +362,7 @@ def train_segnet():
 	print 'initialized vars'
 	cnt=0
 
+	colors=color_map(num_classes)
 
 	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
@@ -385,6 +387,22 @@ def train_segnet():
 				pred_valid=sess.run(prediction_valid,feed_dict=feed_dict_validate);
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
+
+				if(acc<0.02):
+					while(raw_input()!='q'):
+						viz=np.zeros([pred_valid.shape[0]]+image_size)
+						for cl in range(num_classes):
+							t=np.where(pred_valid==cl)
+							viz[t]=colors[cl,:]
+						sp.imshow(viz[0,:])
+				if(acc>0.4):
+					while(raw_input()!='q'):
+						viz=np.zeros([pred_valid.shape[0]]+image_size)
+						for cl in range(num_classes):
+							t=np.where(pred_valid==cl)
+							viz[t]=colors[cl,:]
+						sp.imshow(viz[0,:])
+
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
 
