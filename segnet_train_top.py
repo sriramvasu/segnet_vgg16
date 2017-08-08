@@ -403,18 +403,18 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
 	
-	su=0;matr=np.zeros([num_classes,num_classes])
-	for cl in range(num_classes):
-		if(cl not in non_labels):
-			t1=label_img==cl
-			for pl in range(num_classes):
-				t=np.where(np.logical_and(t1,modpred_img==pl))
-				matr[cl,pl]=t[0].size
+	# su=0;matr=np.zeros([num_classes,num_classes])
+	# for cl in range(num_classes):
+	# 	if(cl not in non_labels):
+	# 		t1=label_img==cl
+	# 		for pl in range(num_classes):
+	# 			t=np.where(np.logical_and(t1,modpred_img==pl))
+	# 			matr[cl,pl]=t[0].size
 
 	for cl in non_labels:
 		non_exist=non_exist+np.where(label_img==cl)[0].size
 	total_pix=modpred_img.size-non_exist
-	return [corr_pix,total_pix,matr]
+	return [corr_pix,total_pix]
 
 
 def test_segnet():
