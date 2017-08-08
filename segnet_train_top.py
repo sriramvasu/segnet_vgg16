@@ -386,6 +386,7 @@ def train_segnet():
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
 
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
