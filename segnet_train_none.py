@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 from image_reader import *
-from utils_mod import *
+from utils_mod_none import *
 from argparse import ArgumentParser
 import fnmatch
 try:
@@ -185,7 +185,7 @@ class Segnet():
 
 		# Upsample 5
 		if(self.is_gpu==True):
-			pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=conv5_1.get_shape().as_list(), name='upsample5_gpu')
+			pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=tf.shape(conv5_1), name='upsample5_gpu')
 		else:
 			# upsample5 = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool5_D=upsample(pool5,out_shape=conv5_1.get_shape().as_list())
@@ -207,7 +207,7 @@ class Segnet():
 	
 		# Upsample 4
 		if(self.is_gpu==True):
-			pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=conv4_1.get_shape().as_list(), name='upsample4_gpu')
+			pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=tf.shape(conv4_1), name='upsample4_gpu')
 		else:
 			# upsample4 = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool4_D=upsample(conv5_1_D,out_shape=conv4_1.get_shape().as_list())
@@ -231,7 +231,7 @@ class Segnet():
 
 		# Upsample3
 		if(self.is_gpu==True):
-			pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=conv3_1.get_shape().as_list(), name='upsample3_gpu')
+			pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=tf.shape(conv3_1), name='upsample3_gpu')
 		else:
 			# upsample3 = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool3_D=upsample(conv4_1_D,out_shape=conv3_1.get_shape().as_list())
@@ -255,7 +255,7 @@ class Segnet():
 
 	    # Upsample2
 		if(self.is_gpu==True):
-			pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
+			pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=tf.shape(conv2_1), name='upsample2_gpu')
 		else:
 			# upsample2 = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool2_D=upsample(conv3_1_D,out_shape=conv2_1.get_shape().as_list())
@@ -278,7 +278,7 @@ class Segnet():
 
 	    # Upsample1
 		if(self.is_gpu==True):
-			pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=conv1_1.get_shape().as_list(), name='upsample1_gpu')
+			pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=tf.shape(conv1_1), name='upsample1_gpu')
 		else:
 			# upsample1 = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool1_D=upsample(conv2_1_D,out_shape=conv1_1.get_shape().as_list())

@@ -1,0 +1,8 @@
+0 sky 0 0 255
+1 tree 0 255 0
+2 car 255 128 0
+3 grass 0 64 0
+4 building 255 0 0
+5 object 255 128 128
+6 road 0 128 128
+7 sidewalk 199 21 133

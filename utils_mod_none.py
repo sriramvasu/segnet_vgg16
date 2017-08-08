@@ -138,8 +138,8 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 		activ_function=lambda x: tf.nn.sigmoid(x)
 	elif(activation=='tanh'):
 		activ_function=lambda x: tf.tanh(x)
-	
-	in_channels = inputT.get_shape().as_list()[-1];
+	in_channels=tf.shape(inputT)
+	# in_channels = inputT.get_shape().as_list()[-1];
 	with tf.variable_scope(name,reuse=reuse):
 		kernel = get_weights(params,var_name='weights', shape=[k_shape[0],k_shape[1],in_channels/groups,out_channels],layer_name=name,trainable=trainable,stddev=1e-1);
 		if(groups==1):
@@ -173,8 +173,8 @@ def atrous_conv(inputT, k_shape, out_channels, dilation_rate, name, phase_train,
 		activ_function=lambda x: tf.nn.sigmoid(x)
 	elif(activation=='tanh'):
 		activ_function=lambda x: tf.tanh(x)
-
-	in_channels = inputT.get_shape().as_list()[-1];
+	in_channels=tf.shape(inputT)
+	# in_channels = inputT.get_shape().as_list()[-1];
 	with tf.variable_scope(name,reuse=reuse):
 		kernel = get_weights(params,var_name='weights', shape=[k_shape[0],k_shape[1],in_channels,out_channels],layer_name=name,trainable=trainable,stddev=1e-1);
 		c1=tf.nn.atrous_conv2d (inputT,kernel,rate=dilation_rate,padding=padding);
@@ -283,7 +283,7 @@ def upsample_with_pool_mask(updates, mask, ksize=[1, 2, 2, 1],out_shape=None,nam
 	input_shape=tf.shape(updates)
 	# input_shape = updates.get_shape().as_list()
 	if out_shape is None:
-		out_shape = (ins[0], input_shape[1] * ksize[1], input_shape[2] * ksize[2], input_shape[3])
+		out_shape = (input_shape[0], input_shape[1] * ksize[1], input_shape[2] * ksize[2], input_shape[3])
 	one_like_mask = tf.ones_like(mask)
 	batch_range = tf.reshape(tf.range(out_shape[0], dtype=tf.int64), shape=[input_shape[0], 1, 1, 1])
 	b = one_like_mask * batch_range
@@ -305,21 +305,23 @@ def xavier_initializer(kernel_size,num_filters):
 def upscore_layer(x,k_shape,stride,out_channels,name,phase_train,reuse=False,out_shape=None,padding='SAME',params=Param_loader(),trainable=False):
 	# Trainable parameter controls if the variable found in weights file should be further trained.
 	with tf.variable_scope(name,reuse=reuse):
-		in_shape=x.get_shape().as_list()
-		in_channels=int(x.get_shape().as_list()[-1])
+		# in_shape=x.get_shape().as_list()
+		in_shape=tf.shape(x)
+		# in_channels=int(x.get_shape().as_list()[-1])
+		in_channels=in_shape[-1]
 		kernel=get_deconv_weights(params,[k_shape[0],k_shape[1],out_channels,in_channels],var_name='deconv_filters',layer_name=name,stddev=1e-1,trainable=trainable)
 		bias=get_biases(params,[out_channels],var_name='deconv_bias',layer_name=name,trainable=trainable);
 		if(out_shape==None):
 			if(padding=='VALID'):
 				h=(in_shape[1]-1)*stride[0]+k_shape[0];
 				w=(in_shape[2]-1)*stride[1]+k_shape[1];
-				shape=np.stack([in_shape[0],h,w,out_channels]).astype(np.int32)
+				shape=tf.cast(tf.stack([in_shape[0],h,w,out_channels]),tf.int32)
 			elif(padding=='SAME'):
 				h=(in_shape[1]-1)*stride[0]+1;
 				w=(in_shape[2]-1)*stride[1]+1;
-				shape=np.stack([in_shape[0],h,w,out_channels]).astype(np.int32)
+				shape=tf.cast(tf.stack([in_shape[0],h,w,out_channels]),tf.int32)
 		else:
-			shape=np.stack([in_shape[0],out_shape[1],out_shape[2],out_channels]).astype(np.int32)
+			shape=tf.cast(tf.stack([in_shape[0],out_shape[1],out_shape[2],out_channels]),tf.int32)
 		# if(groups==1):
 		c1=tf.nn.conv2d_transpose(x,kernel,output_shape=shape,strides=[1,stride[0],stride[1],1],padding=padding);
 		# else:
@@ -334,22 +336,25 @@ def upscore_layer(x,k_shape,stride,out_channels,name,phase_train,reuse=False,out
 
 def fc_flatten(x,num_out,name,phase_train,reuse=False,relu=False,params=Param_loader(),trainable=False):
 	with tf.variable_scope(name,reuse=reuse):
-		shape=x.get_shape().as_list();
+		# shape=x.get_shape().as_list();
+		shape=tf.shape(x)
 		# Unwind before fully connected layer
-		x_reshaped=tf.reshape(x,[-1,np.prod(shape[1:])]); #reshape just to be safe
-		num_in=np.prod(shape[1:]);
+		x_reshaped=tf.reshape(x,[-1,tf.reduce_prod(shape[1:])]) #reshape just to be safe
+		num_in=tf.reduce_prod(shape[1:])
 		weights=get_weights(params,var_name='fc_weights',layer_name=name,shape=[num_in,num_out],trainable=trainable)
 		biases=get_biases(params,var_name='fc_biases',shape=[num_out],layer_name=name,trainable=trainable)
-		added=tf.nn.bias_add(tf.matmul(x_reshaped,weights),biases);
+		added=tf.nn.bias_add(tf.matmul(x_reshaped,weights),biases)
 		if(relu==True):
-			return tf.nn.relu(added);
+			return tf.nn.relu(added)
 		else:
-			return added;
+			return added
 		
 def fc_convol(x,k_shape,num_out,name,phase_train,reuse=False,relu=False,params=Param_loader(),trainable=False):
 	with tf.variable_scope(name,reuse=reuse):
+
 		#Fully connected layer as a convolution
-		num_in=x.get_shape().as_list()[-1];	
+		# num_in=x.get_shape().as_list()[-1]
+		num_in=tf.shape(x)[-1]
 		weights=get_weights(params,[k_shape[0],k_shape[1],num_in,num_out],var_name='fc_weights',layer_name=name,trainable=trainable)
 		bias=get_biases(params,[num_out],var_name='fc_biases',layer_name=name,trainable=trainable)
 		c1=tf.nn.conv2d(x,weights,strides=[1,1,1,1],padding='SAME');

@@ -579,4 +579,4 @@ def save_hdf5(sess,var_list):
 
 
 # os.environ['CUDA_VISIBLE_DEVICES']="0";
-# evaluate_segnet_camvid()
+evaluate_segnet_camvid()

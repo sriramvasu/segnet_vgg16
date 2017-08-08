@@ -288,7 +288,7 @@ class Segnet():
 		# decode 4
 		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -341,7 +341,7 @@ def train_segnet():
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network'
 
-	file=open(os.path.join('lej_match_labels.txt'))
+	file=open(os.path.join('camvid_match_labels.txt'))
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
@@ -395,15 +395,26 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
 	pred=pred1[valid_labels]
 	label_img=label_img[valid_labels]
-	
-	modpred_img=pred[:]
+	non_labels=[]
+	modpred_img=-1*np.ones(pred.shape)
+	non_exist=0
 	for cl in range(num_classes):
 		t=np.where(pred==cl)
 		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
-	# non_exist=np.where(label_img==11)[0].size
-	total_pix=modpred_img.size#-non_exist
-	return [corr_pix,total_pix]
+
+	su=0;matr=np.zeros([num_classes,num_classes])
+	for cl in range(num_classes):
+		if(cl not in non_labels):
+			t1=label_img==cl
+			for pl in range(num_classes):
+				t=np.where(np.logical_and(t1,modpred_img==pl))
+				matr[cl,pl]=t[0].size
+
+	for cl in non_labels:
+		non_exist=non_exist+np.where(label_img==cl)[0].size
+	total_pix=modpred_img.size-non_exist
+	return [corr_pix,total_pix,matr]
 
 
 def test_segnet():
@@ -431,8 +442,8 @@ def test_segnet():
 	net.rt['argmax']=prediction
 	# accuracy=tf.size(tf.where(prediction==test_labels)[0]);
 	print 'built loss graph'
-	sess.run(tf.global_variables_initializer());
-	print 'initialized vars';
+	sess.run(tf.global_variables_initializer())
+	print 'initialized vars'
 	# plt.ion()
 	file=open(os.path.join('match_labels.txt'))
 	match_labels=file.readlines()
@@ -441,7 +452,7 @@ def test_segnet():
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
-		pred=sess.run(prediction,feed_dict=feed_dict);
+		pred=sess.run(prediction,feed_dict=feed_dict)
 		[corr,total_pix]=transform_labels(pred,test_label_batch,match_labels,num_classes)
 		acc=corr*1.0/total_pix
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
@@ -508,61 +519,111 @@ def evaluate_segnet_camvid():
 	pred_path='/home/sriram/intern/datasets/SegNet_Output/CamVid_Output/'
 	labels_path='/home/sriram/intern/datasets/CamVid/'
 	num_classes=12
-	file=open(os.path.join(pred_path,'match_labels.txt'))
+	file=open('camvid_match_labels.txt')
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	count=0;s=0
+	train_matr=np.zeros([num_classes,num_classes])
+	val_matr=np.zeros([num_classes,num_classes])
+	test_matr=np.zeros([num_classes,num_classes])
+
 	for i in [f for f in os.listdir(pred_path) if os.path.isdir(os.path.join(pred_path,f))]:
 		path1=os.path.join(pred_path,i)
 		for prediction in fnmatch.filter(os.listdir(path1),'*.png'):
 			pred_img=sp.imread(os.path.join(path1,prediction))
 			label_img=sp.imread(os.path.join(labels_path,i+'annot',prediction))
-			modpred_img=pred_img[:]
-			for cl in range(num_classes):
-				t=np.where(pred_img==cl)
-				modpred_img[t]=int(match_labels[cl][-1])
-			corr_pix=np.where(modpred_img==label_img)[0].size
-			non_exist=np.where(label_img==11)[0].size
-			total_pix=modpred_img.shape[0]*modpred_img.shape[1]-non_exist
+
+
+			corr_pix,total_pix,matr=transform_labels(pred_img,label_img,match_labels,num_classes)
+			if(i=='train'):
+				train_matr=train_matr+matr
+			elif(i=='val'):
+				val_matr=val_matr+matr
+			elif(i=='test'):
+				test_matr=test_matr+matr
+			# modpred_img=pred_img[:]
+			# for cl in range(num_classes):
+			# 	t=np.where(pred_img==cl)
+			# 	modpred_img[t]=int(match_labels[cl][-1])
+			# corr_pix=np.where(modpred_img==label_img)[0].size
+			# non_exist=np.where(label_img==11)[0].size
+			# total_pix=modpred_img.shape[0]*modpred_img.shape[1]-non_exist
 			accuracy=corr_pix*1.0/total_pix
 			s=s+accuracy
 			count=count+1
 			agg_acc=s/count
-			print i,prediction,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
+			# print i,prediction,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
+			# print '\n'
+	# print 'train_matrix',train_matr
+	# print 'val_matrix',val_matr
+	# print 'test_matrix',test_matr
+	np.save(os.path.join(pred_path,'train_conf_matrix.npy'),train_matr)
+	np.save(os.path.join(pred_path,'val_conf_matrix.npy'),val_matr)
+	np.save(os.path.join(pred_path,'test_conf_matrix.npy'),test_matr)
 
 
-def evaluate_segnet_arl(absent_classes):  
+def evaluate_segnet_arl(absent_classes=[]):  
 	#55% on lej15 and 45% on b507 after removing 5 absent classes. 
 	#Accuracy suffers slightly upon adding those classes as a general object
 	# Retrain segnet on ira7 dataset
-
-	pred_path='/home/sriram/intern/datasets/data/data-with-labels/b507/predictions/'
-	labels_path='/home/sriram/intern/datasets/data/data-with-labels/b507/new_labels/'
-	# absent_classes=[7,8,10,11]
+	se=['training_set','val_set','testing_set']
 	num_classes=12
-	file=open(os.path.join('/home/sriram/intern/datasets/data/data-with-labels/b507/','match_labels.txt'))
+
+	train_matr=np.zeros([num_classes,num_classes])
+	val_matr=np.zeros([num_classes,num_classes])
+	test_matr=np.zeros([num_classes,num_classes])
+	file=open('lej_match_labels.txt')
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
-	count=0;s=0 
-	for label in fnmatch.filter(os.listdir(labels_path),'*.png'):
-		label_img=sp.imread(os.path.join(labels_path,label))
-		pred_img=sp.imresize(sp.imread(os.path.join(pred_path,label)),label_img.shape,interp='nearest')
-		modpred_img=-1*np.ones(pred_img.shape)
-		for cl in range(num_classes):
-			if cl in absent_classes:
-				continue
-			t=np.where(pred_img==cl)
-			modpred_img[t]=int(match_labels[cl][-1])
-		cond=np.where(np.logical_and(label_img!=255,modpred_img!=-1))
-		corr_pix=np.where(modpred_img[cond]==label_img[cond])[0].size
-		total_pix=cond[0].size
-		accuracy=corr_pix*1.0/total_pix
-		s=s+accuracy
-		count=count+1
-		agg_acc=s/count
-		print label,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
+	count_train=0;s_train=0
+	count_val=0;s_val=0
+	count_test=0;s_test=0
+
+	for se_elem in se:
+		pred_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/'+se_elem+'/predictions/'
+		labels_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/'+se_elem+'/new_labels/'
+		# absent_classes=[7,8,10,11]
+
+
+		for label in fnmatch.filter(os.listdir(labels_path),'*.png'):
+			label_img=sp.imread(os.path.join(labels_path,label))
+			pred_img=sp.imresize(sp.imread(os.path.join(pred_path,label)),label_img.shape,interp='nearest')
+
+			[corr_pix,total_pix,matr]=transform_labels(pred_img,label_img,match_labels,num_classes)
+			accuracy=corr_pix*1.0/total_pix
+			if(se_elem=='training_set'):
+				train_matr=train_matr+matr
+				s_train=s_train+accuracy
+				count_train=count_train+1
+				agg_acc_train=s_train/count_train
+				print se_elem,label,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc_train
+
+			elif(se_elem=='val_set'):
+				val_matr=val_matr+matr
+				s_val=s_val+accuracy
+				count_val=count_val+1
+				agg_acc_val=s_val/count_val
+				print se_elem,label,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc_val
+
+			elif(se_elem=='testing_set'):
+				test_matr=test_matr+matr
+				s_test=s_test+accuracy
+				count_test=count_test+1
+				agg_acc_test=s_test/count_test
+				print se_elem,label,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc_test
+
+	print train_matr
+	print val_matr
+	print test_matr
+	print count_train
+	print count_val
+	print count_test
+	np.save(os.path.join(os.path.join(pred_path,'..'),'train_conf_matrix.npy'),train_matr)
+	np.save(os.path.join(os.path.join(pred_path,'..'),'val_conf_matrix.npy'),val_matr)
+	np.save(os.path.join(os.path.join(pred_path,'..'),'test_conf_matrix.npy'),test_matr)
+
 
 def save_hdf5(sess,var_list):
 	file=h5py.File('segnet_model.h5','w')
@@ -581,5 +642,5 @@ if __name__=="__main__":
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
   
-	train_segnet()
-	# evaluate_segnet_camvid()
+	# train_segnet()
+	evaluate_segnet_arl()

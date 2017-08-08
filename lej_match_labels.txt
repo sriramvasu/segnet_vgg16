@@ -1,0 +1,12 @@
+0 Sky 0
+1 Building 4
+2 Pole 5
+3 RoadMarking 6
+4 Road 6
+5 Pavement 7
+6 Tree 1
+7 Signsymbol 5
+8 Fence 5
+9 Vehicle 2
+10 Pedestrian 9
+11 Bike 2
