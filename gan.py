@@ -204,7 +204,7 @@ def train_DCGAN():
 	f=h5py.File('mnist.h5','r')
 	x_train=f['x_train'][:]
 	y_train=f['y_train'][:]
-	x_train=(x_train.astype(np.float32)*2-127)/255
+	x_train=(2*x_train.astype(np.float32)-127)/127
 	batch_size=50
 	save_every=1
 	rand_vect_size=100
@@ -253,6 +253,11 @@ def save_hdf5(list_vars,list_names,base_name,suffix):
 		f.create_dataset(name,data=i)
 	f.close()
 
+def load_npy(list_vars,sess,base_name,suffix):
+	filename=base_name+str(suffix)+'.npy'
+	rt=np.load(filename)[()]
+	
+	
 def read_hdf5(base_name,suffix):
 	filename=base_name+str(suffix)+'.h5'
 	f=h5py.File(filename,'r')
@@ -270,5 +275,16 @@ def next_batch(x_train,batch_size):
 	index=np.random.randint(0,x_train.shape[0],batch_size)
 	return x_train[index,:].reshape([batch_size,28,28,1])
 
-os.environ['CUDA_VISIBLE_DEVICES']="";
-train_DCGAN()
+if __name__=="__main__":
+	parser = ArgumentParser()
+	parser.add_argument('-devbox',type=int,default=0)
+	args = parser.parse_args()
+	
+	if args.devbox:
+	  BASE_DIR = '/root/segnet_vgg16'
+	  os.environ['CUDA_VISIBLE_DEVICES']="1";
+	else:
+	  BASE_DIR = '/home/sriram/intern'
+	  os.environ['CUDA_VISIBLE_DEVICES']="";
+  
+	train_DCGAN()
