@@ -86,13 +86,13 @@ def get_deconv_weights(params,shape,layer_name,var_name,trainable,stddev=1):
 def get_weights(params,shape,layer_name,var_name,trainable,stddev=1):
 	params.transposer=[2,3,1,0]
 	if(params.pretrained==False):
-		return tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
+		return tf.get_variable(initializer=xavier_initializer(shape[0],shape[-1]),shape=shape,name=var_name);
 	else:
 		if layer_name in params.layer_names:
 			print 'loading pretrained weight for ',layer_name,'with shape:',shape;
 			wt=tf.get_variable(trainable=trainable,initializer=tf.constant_initializer(np.transpose(params.weight_data[layer_name,'0'],params.transposer)),shape=shape,name=var_name);
 		else:
-			wt=tf.get_variable(initializer=tf.truncated_normal_initializer(stddev=stddev),shape=shape,name=var_name);
+			wt=tf.get_variable(initializer=xavier_initializer(shape[0],shape[-1]),shape=shape,name=var_name);
 		return wt;
 
 
