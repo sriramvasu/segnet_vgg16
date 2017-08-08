@@ -402,7 +402,7 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 		t=np.where(pred==cl)
 		modpred_img[t]=int(match_labels[cl][-1])
 	corr_pix=np.where(modpred_img==label_img)[0].size
-
+	
 	su=0;matr=np.zeros([num_classes,num_classes])
 	for cl in range(num_classes):
 		if(cl not in non_labels):

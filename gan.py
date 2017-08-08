@@ -155,7 +155,7 @@ class DCGAN():
 			# ups4_1=upsample(ups3_3)
 			ups4_1=ups3_3
 			ups4_2=conv_bn(ups4_1, [3,3], 32, [1,1], 'conv4_2', self.is_training,reuse=reuse,activation='leakyrelu')
-			ups4_3=conv_bn(ups4_2, [3,3], 1, [1,1], 'conv4_3', self.is_training,reuse=reuse,batch_norm=False,activation='sigmoid')
+			ups4_3=conv_bn(ups4_2, [3,3], 1, [1,1], 'conv4_3', self.is_training,reuse=reuse,batch_norm=False,activation='tanh')
 			print_shape(ups4_3)
 
 			self.gen_output=ups4_3
@@ -204,7 +204,7 @@ def train_DCGAN():
 	f=h5py.File('mnist.h5','r')
 	x_train=f['x_train'][:]
 	y_train=f['y_train'][:]
-	x_train=x_train.astype(np.float32)/127
+	x_train=(x_train.astype(np.float32)*2-127)/255
 	batch_size=50
 	save_every=1
 	rand_vect_size=100
