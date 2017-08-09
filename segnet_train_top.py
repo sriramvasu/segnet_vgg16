@@ -672,5 +672,5 @@ if __name__=="__main__":
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
   
-	# train_segnet()
-	evaluate_segnet_arl()
+	train_segnet()
+	# evaluate_segnet_arl()
