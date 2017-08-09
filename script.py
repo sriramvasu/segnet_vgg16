@@ -177,7 +177,8 @@ def train_test_split():
 	l=os.listdir(os.path.join(path,'new_labels'))
 	l.sort()
 	n=len(l)
-	a=np.array(range(n));#np.random.shuffle(a)
+	a=np.array(range(n))
+	np.random.shuffle(a)
 	test_l=l[:int(split_ratio*n)+1]
 	val_l=l[int(split_ratio*n)+1:int(2*split_ratio*n)+1]
 	train_l=l[int(2*split_ratio*n)+1:]

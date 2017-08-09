@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from math import ceil
 import scipy.misc as sp
+import math
 try:
   import h5py
 except:
@@ -153,7 +154,7 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if batch_norm is True:
-			conv_out = batch_normalization(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
 		else:
 			conv_out=activ_function(bias)
 	return conv_out
@@ -181,7 +182,7 @@ def atrous_conv(inputT, k_shape, out_channels, dilation_rate, name, phase_train,
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if batch_norm is True:
-			conv_out = batch_normalization(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
 		else:
 			conv_out=activ_function(bias)
 	return conv_out
@@ -217,18 +218,7 @@ def batch_normalization(input1,is_training,scope,params,reuse,trainable=False):
 		[mu,variance]=tf.nn.moments(x=input1,axes=[0,1,2])
 		moving_mean=tf.assign(moving_mean,mu*0.001+moving_mean*0.999)
 		moving_variance=tf.assign(moving_variance,variance*0.001+moving_variance*0.999)
-		# def f1():
-		# 	print 'only once'
-		# 	moving_mean=mu
-		# 	moving_variance=variance
-		# 	switch=tf.constant(True)
-		# 	return [moving_mean]
-		# def f2():
-		# 	print 'always'
-		# 	moving_mean=0.99*moving_mean+0.01*mu
-		# 	moving_variance=0.99*moving_variance+0.01*variance
-		# 	return [moving_mean]
-		# tf.cond(switch,f2,f1)
+
 
 	if(params.pretrained==False):
 		with tf.variable_scope('',reuse=reuse):

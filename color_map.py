@@ -5,7 +5,6 @@ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html#devkit
 """
 
 import numpy as np
-from skimage.io import imshow
 import matplotlib.pyplot as plt
 
 def color_map(N=256, normalized=False):
