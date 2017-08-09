@@ -2,9 +2,12 @@ import tensorflow as tf
 import numpy as np
 from image_reader import image_reader
 import os
+import math
 from utils_mod import *
 import h5py
 import fnmatch
+from argparse import ArgumentParser
+
 
 class DCGAN():
 	def __init__(self,keep_prob=0.5,is_gpu=False,weights_path=None,pretrained=False):
@@ -256,7 +259,7 @@ def save_hdf5(list_vars,list_names,base_name,suffix):
 def load_npy(list_vars,sess,base_name,suffix):
 	filename=base_name+str(suffix)+'.npy'
 	rt=np.load(filename)[()]
-	
+
 	
 def read_hdf5(base_name,suffix):
 	filename=base_name+str(suffix)+'.h5'
