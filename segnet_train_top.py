@@ -82,6 +82,8 @@ class Segnet():
 			pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
+		pool1=dropout(pool1,self.keep_prob,self.is_training)
+
 		print_shape(pool1);
 		# self.rt['conv1_1']=conv1_1
 		# self.rt['conv1_2']=conv1_2
@@ -100,6 +102,8 @@ class Segnet():
 			pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
 		else:
 			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
+		pool2=dropout(pool2,self.keep_prob,self.is_training)
+
 		print_shape(pool2);
 		# self.rt['conv2_1']=conv2_1
 		# self.rt['conv2_2']=conv2_2
@@ -123,6 +127,8 @@ class Segnet():
 			pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
+		pool3=dropout(pool3,self.keep_prob,self.is_training)
+
 		print_shape(pool3);
 		# self.rt['conv3_1']=conv3_1
 		# self.rt['conv3_2']=conv3_2
@@ -146,7 +152,10 @@ class Segnet():
 			pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
+		
+		pool4=dropout(pool4,self.keep_prob,self.is_training)
 		print_shape(pool4);
+
 		# self.rt['conv4_1']=conv4_1
 		# self.rt['conv4_2']=conv4_2
 		# self.rt['conv4_3']=conv4_3
@@ -212,7 +221,7 @@ class Segnet():
 		else:
 			# upsample4 = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool4_D=upsample(conv5_1_D,out_shape=conv4_1.get_shape().as_list())
-		print_shape(pool4_D);
+		print_shape(pool4_D)
 
 		# decode 4
 		conv4_3_D = conv_bn(pool4_D, [3,3], 512,[1,1], name="conv4_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
@@ -670,7 +679,7 @@ if __name__=="__main__":
 	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']="1";
+	  os.environ['CUDA_VISIBLE_DEVICES']="3";
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
