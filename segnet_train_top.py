@@ -350,8 +350,8 @@ def train_segnet():
 	net.match_labels=match_labels
 
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes)
-	# learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
-	learning_rate = base_lr*(1/rate)^count
+	learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
+	# learning_rate = base_lr*(1/rate)^count
 	
 
 	net.train(learning_rate)
