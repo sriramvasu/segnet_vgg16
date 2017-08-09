@@ -320,7 +320,7 @@ def train_segnet():
 	lr_decay_every=5
 	validate_every=1
 	save_every=50
-	base_lr=1e-4
+	base_lr=1e-3
 	img_size=[360,480]
 
 	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
