@@ -336,7 +336,7 @@ def train_segnet():
 	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]])
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
 	count=tf.placeholder(tf.int32,shape=[])
-	rate=tf.placeholder(dtype=tf.float32,[])
+	rate=tf.placeholder(dtype=tf.float32,shape=[])
 	
 	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
