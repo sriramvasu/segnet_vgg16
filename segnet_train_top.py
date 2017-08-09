@@ -309,8 +309,8 @@ def train_segnet():
 	batch_size_train=3
 	batch_size_valid=1
 	lr_decay_every=5
-	validate_every=5
-	save_every=10
+	validate_every=1
+	save_every=50
 	base_lr=1e-6
 	img_size=[360,480]
 
@@ -335,7 +335,8 @@ def train_segnet():
 	train_labels=tf.placeholder(tf.int64, shape=[batch_size_train, image_size[0], image_size[1]])
 	valid_data=tf.placeholder(tf.float32,shape=[batch_size_valid,image_size[0],image_size[1],image_size[2]])
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
-	count=tf.placeholder(tf.int32,shape=[]);
+	count=tf.placeholder(tf.int32,shape=[])
+	rate=tf.placeholder(dtype=tf.float32,[])
 	
 	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
@@ -349,7 +350,7 @@ def train_segnet():
 	net.match_labels=match_labels
 
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes)
-	learning_rate=tf.maximum(tf.train.exponential_decay(base_lr,count,1,0.5),5e-7)
+	learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
 	net.train(learning_rate)
 	prediction_train=tf.argmax(train_logits,axis=3)
 	prediction_valid=tf.argmax(valid_logits,axis=3)
@@ -361,18 +362,18 @@ def train_segnet():
 	# saver.restore(sess,'segnet_model')
 	print 'initialized vars'
 	cnt=0
-
+	dec=4
 	colors=color_map(num_classes)
 
 	while(reader.epoch<n_epochs):	
 		while(reader.batch_num<reader.n_batches):
 			[train_data_batch,train_label_batch]=reader.next_batch()
-			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt//lr_decay_every}
+			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt,rate:dec}
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train)
 			[corr,total_pix]=transform_labels(pred,train_label_batch,match_labels,num_classes)
 			acc=corr*1.0/total_pix
-			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
-			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt//lr_decay_every}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
+			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt,rate:dec}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
 
 
 		if((reader.epoch+1)%save_every==0):
@@ -388,27 +389,37 @@ def train_segnet():
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
 
-				if(acc<0.02):
-					while(raw_input()!='q'):
-						viz=np.zeros([pred_valid.shape[0]]+image_size)
-						for cl in range(num_classes):
-							t=np.where(pred_valid==cl)
-							viz[t]=colors[cl,:]
-						sp.imshow(viz[0,:])
-				if(acc>0.4):
-					while(raw_input()!='q'):
-						viz=np.zeros([pred_valid.shape[0]]+image_size)
-						for cl in range(num_classes):
-							t=np.where(pred_valid==cl)
-							viz[t]=colors[cl,:]
-						sp.imshow(viz[0,:])
+				# if(acc<0.02):
+				# 	while(raw_input()!='q'):
+				# 		viz=np.zeros([pred_valid.shape[0]]+image_size)
+				# 		for cl in range(num_classes):
+				# 			t=np.where(pred_valid==cl)
+				# 			viz[t]=colors[cl,:]
+				# 		sp.imshow(viz[0,:])
+				# if(acc>0.4):
+				# 	while(raw_input()!='q'):
+				# 		viz=np.zeros([pred_valid.shape[0]]+image_size)
+				# 		for cl in range(num_classes):
+				# 			t=np.where(pred_valid==cl)
+				# 			viz[t]=colors[cl,:]
+				# 		sp.imshow(viz[0,:])
+				
 
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
-
+			print 'increment/decrement?'
+			char=raw_input()
+			if(char=='i'):
+				cnt+=1
+				print 'enter rate:'
+				dec=float(raw_input())
+			if(char=='d'):
+				cnt-=1
+				print 'enter rate:'
+				dec=float(raw_input())
+				
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
-		cnt=cnt+1		
 
 def transform_labels(pred1,label_img,match_labels,num_classes):
 	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
