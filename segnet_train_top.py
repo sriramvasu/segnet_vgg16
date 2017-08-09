@@ -377,14 +377,15 @@ def train_segnet():
 	dec=4
 	colors=color_map(num_classes)
 
-	while(reader.epoch<n_epochs):	
+	while(reader.epoch<n_epochs):
+		s_train=0;cnt_train=1	
 		while(reader.batch_num<reader.n_batches):
 			[train_data_batch,train_label_batch]=reader.next_batch()
 			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt,rate:dec}
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train)
 			[corr,total_pix]=transform_labels(pred,train_label_batch,match_labels,num_classes)
 			acc=corr*1.0/total_pix
-			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate_acc:',s_train*1.0/cnt_train
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt,rate:dec}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
 
 
@@ -393,6 +394,7 @@ def train_segnet():
 
 		if((reader.epoch+1)%validate_every==0):
 			reader_valid.reset_reader()
+			s_valid=0;cnt_valid=1
 			print 'validating..'
 			while(reader_valid.batch_num<reader_valid.n_batches):
 				[valid_data_batch,valid_label_batch]=reader_valid.next_batch()
@@ -400,6 +402,7 @@ def train_segnet():
 				pred_valid=sess.run(prediction_valid,feed_dict=feed_dict_validate);
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
+				s_valid=s_valid+acc
 
 				# if(acc<0.02):
 				# 	while(raw_input()!='q'):
@@ -417,7 +420,7 @@ def train_segnet():
 				# 		sp.imshow(viz[0,:])
 				
 
-				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate acc:',s_valid*1.0/cnt_valid
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
 			print 'increment/decrement?'
 			char=raw_input()
