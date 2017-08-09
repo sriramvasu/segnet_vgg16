@@ -385,6 +385,7 @@ def train_segnet():
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train)
 			[corr,total_pix]=transform_labels(pred,train_label_batch,match_labels,num_classes)
 			acc=corr*1.0/total_pix
+			s_train=s_train+acc
 			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate_acc:',s_train*1.0/cnt_train
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt,rate:dec}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
 
