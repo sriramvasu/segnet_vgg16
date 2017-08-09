@@ -679,7 +679,7 @@ if __name__=="__main__":
 	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']="3";
+	  os.environ['CUDA_VISIBLE_DEVICES']="2";
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="";
