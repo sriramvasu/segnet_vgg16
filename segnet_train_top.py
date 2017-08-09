@@ -412,11 +412,11 @@ def train_segnet():
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
 			print 'increment/decrement?'
 			char=raw_input()
-			if(char=='i'):
+			if(char=='d'):
 				cnt+=1
 				print 'enter rate:'
 				dec=float(raw_input())
-			if(char=='d'):
+			if(char=='i'):
 				cnt-=1
 				print 'enter rate:'
 				dec=float(raw_input())
