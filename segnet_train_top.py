@@ -311,7 +311,7 @@ def train_segnet():
 	lr_decay_every=5
 	validate_every=1
 	save_every=50
-	base_lr=1e-3
+	base_lr=1e-2
 	img_size=[360,480]
 
 	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
@@ -352,7 +352,7 @@ def train_segnet():
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes)
 	learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
 	# learning_rate = base_lr*(1/rate)^count
-	
+
 
 	net.train(learning_rate)
 	prediction_train=tf.argmax(train_logits,axis=3)
