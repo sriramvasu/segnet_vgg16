@@ -388,7 +388,7 @@ def train_segnet():
 			s_train=s_train+acc
 			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate_acc:',s_train*1.0/cnt_train
 			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt,rate:dec}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
-
+			cnt_train+=1
 
 		if((reader.epoch+1)%save_every==0):
 			saver.save(sess,'segnet_arlmodel',global_step=(reader.epoch+1))
@@ -423,6 +423,7 @@ def train_segnet():
 
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate acc:',s_valid*1.0/cnt_valid
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
+				cnt_valid+=1
 			print 'increment/decrement?'
 			char=raw_input()
 			if(char=='d'):
