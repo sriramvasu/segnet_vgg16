@@ -5,7 +5,7 @@ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html#devkit
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def color_map(N=256, normalized=False):
     def bitget(byteval, idx):
@@ -42,4 +42,4 @@ def color_map_viz():
     imshow(array)
     plt.yticks([row_size*i+row_size/2 for i in range(nclasses+1)], labels)
     plt.xticks([])
-plt.show()
+# plt.show()

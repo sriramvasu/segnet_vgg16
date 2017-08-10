@@ -304,7 +304,7 @@ class Segnet():
 		return conv1_1_D;
 
 def train_segnet():
-	num_classes=8
+	num_classes=12
 	n_epochs=100
 	batch_size_train=3
 	batch_size_valid=1
@@ -314,15 +314,15 @@ def train_segnet():
 	base_lr=1e-6
 	img_size=[360,480]
 
-	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
-	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
-	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
-	# train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
-	# train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
-	# test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
-	# test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
+	train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
+	train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
+	test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
+	test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
 
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3])
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3])
@@ -428,10 +428,10 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	non_labels=[]
 	modpred_img=-1*np.ones(pred.shape)
 	non_exist=0
-	for cl in range(num_classes):
-		t=np.where(pred==cl)
-		modpred_img[t]=int(match_labels[cl][-1])
-	corr_pix=np.where(modpred_img==label_img)[0].size
+	# for cl in range(num_classes):
+	# 	t=np.where(pred==cl)
+	# 	modpred_img[t]=int(match_labels[cl][-1])
+	corr_pix=np.where(pred==label_img)[0].size
 	
 	# su=0;matr=np.zeros([num_classes,num_classes])
 	# for cl in range(num_classes):
