@@ -296,7 +296,7 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
 		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_1_D);
@@ -320,7 +320,7 @@ def train_segnet():
 	lr_decay_every=5
 	validate_every=1
 	save_every=50
-	base_lr=1e-3
+	base_lr=1e-4
 	img_size=[360,480]
 
 	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
