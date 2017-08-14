@@ -24,7 +24,7 @@ class image_reader():
 		self.size=min(self.data_siz,self.label_siz);
 		self.n_batches=ceil(self.size*1.0/self.batch_size);
 		self.data_files=self.data_files[:self.size];
-		self.label_files=self.label_files[:self.size];\
+		self.label_files=self.label_files[:self.size];
 		self.reset_reader();
 		self.shuffle_data();
 	def print_content():
@@ -69,15 +69,17 @@ class image_reader():
 			residue=self.size-self.cursor;
 			self.chunk_data=np.concatenate([self.data_files[-1*residue:],self.data_files[:self.batch_size-residue]])
 			self.chunk_labels=np.concatenate([self.label_files[-1*residue:],self.label_files[:self.batch_size-residue]])
-			self.cursor=0;
-			self.shuffle_data();
+			self.cursor=0
+			self.shuffle_data()
 			# self.epoch=self.epoch+1;
 			# self.batch_num=0;
 		self.batch_num=self.batch_num+1
 
-		data=[sp.imresize(sp.imread(i, mode='RGB'),[self.image_size[0],self.image_size[1]]) for i in self.chunk_data];
-		lab=[sp.imresize(sp.imread(i),[self.image_size[0],self.image_size[1]],interp='nearest') for i in self.chunk_labels];
-		
+		# data=[sp.imresize(sp.imread(i, mode='RGB'),[self.image_size[0],self.image_size[1]]) for i in self.chunk_data];
+		# lab=[sp.imresize(sp.imread(i),[self.image_size[0],self.image_size[1]],interp='nearest') for i in self.chunk_labels];
+		data=[sp.imread(i, mode='RGB') for i in self.chunk_data];
+		lab=[sp.imread(i) for i in self.chunk_labels];
+
 		return [np.stack(data),np.stack(lab)];
 
 
