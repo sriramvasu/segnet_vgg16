@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
 import os
-from image_reader import *
-from utils_mod import *
-import matplotlib.pyplot as plt
+from image_reader_test import *
+from utils_mod_test import *
+#import matplotlib.pyplot as plt
 from color_map import *
-import h5py
+#import h5py
 
 class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
@@ -370,9 +370,10 @@ def test_segnet():
 def predict_segnet():
 	num_classes=12
 	batch_size_test=2
-	all_dir='SegNet-Tutorial/CamVid/allcamvid/'
-	save_folder='predictions_camvid'
-	save_to=os.path.dirname(os.path.abspath(all_dir))
+	all_dir='SegNet-Tutorial/CamVid/train/'
+	save_folder='predictions_camvid_test'
+	#save_to=os.path.dirname(os.path.abspath(all_dir))
+	save_to='./'
 	reader_test=single_reader(all_dir,batch_size_test,image_size=[360,480,3]);
 	image_size=reader_test.image_size;
 
@@ -391,7 +392,7 @@ def predict_segnet():
 	
 	sess.run(tf.global_variables_initializer());
 	print 'initialized vars';
-	plt.ion()
+	#plt.ion()
 	path=os.path.abspath(os.path.join(save_to,save_folder))
 
 	if not os.path.exists(path):
@@ -405,7 +406,7 @@ def predict_segnet():
 		feed_dict={test_data:test_data_batch};
 		pred=sess.run(prediction,feed_dict=feed_dict);
 		for i in range(pred.shape[0]):
-			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:])
+			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:].astype('uint8'))
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num
 
 	
@@ -493,5 +494,5 @@ def save_hdf5(sess,var_list):
 
 
 
-os.environ['CUDA_VISIBLE_DEVICES']="0";
+os.environ['CUDA_VISIBLE_DEVICES']="1";
 predict_segnet()

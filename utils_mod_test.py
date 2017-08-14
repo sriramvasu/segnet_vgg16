@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import scipy.misc as sp
-import h5py
+#import h5py
 
 class Param_loader():
 	def __init__(self,weights_path=None):

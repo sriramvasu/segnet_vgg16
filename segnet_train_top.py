@@ -443,8 +443,8 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	pred=pred1[valid_labels]
 	label_img=label_img[valid_labels]
 	non_labels=[]
-	#modpred_img=-1*np.ones(pred.shape)
-	modpred_img=pred[:]
+	modpred_img=-1*np.ones(pred.shape)
+	#modpred_img=pred[:]
 	non_exist=0
 	for cl in range(num_classes):
 		t=np.where(pred==cl)
@@ -610,6 +610,42 @@ def evaluate_segnet_camvid():
 	np.save(os.path.join(pred_path,'val_conf_matrix.npy'),val_matr)
 	np.save(os.path.join(pred_path,'test_conf_matrix.npy'),test_matr)
 
+def evaluate_segnet_camvid_small():
+        #gives 87.7% accuracy on 11 common classes
+
+        pred_path='./predictions_camvid_another/'
+        labels_path='./SegNet-Tutorial/CamVid/trainannot/'
+        num_classes=12
+        file=open('camvid_match_labels.txt')
+        match_labels=file.readlines()
+        file.close()
+        match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+        count=0;s=0
+        train_matr=np.zeros([num_classes,num_classes])
+        val_matr=np.zeros([num_classes,num_classes])
+        test_matr=np.zeros([num_classes,num_classes])
+
+        
+        path1=pred_path
+        for prediction in fnmatch.filter(os.listdir(path1),'*.png'):
+                        pred_img=sp.imread(os.path.join(path1,prediction))
+                        label_img=sp.imread(os.path.join(labels_path,prediction))
+
+
+                        corr_pix,total_pix=transform_labels(pred_img,label_img,match_labels,num_classes)
+                        
+                        accuracy=corr_pix*1.0/total_pix
+                        s=s+accuracy
+                        count=count+1
+                        agg_acc=s/count
+                        print prediction,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
+                        # print '\n'
+        # print 'train_matrix',train_matr
+        # print 'val_matrix',val_matr
+        # print 'test_matrix',test_matr
+        #np.save(os.path.join(pred_path,'train_conf_matrix.npy'),train_matr)
+        #np.save(os.path.join(pred_path,'val_conf_matrix.npy'),val_matr)
+        #np.save(os.path.join(pred_path,'test_conf_matrix.npy'),test_matr)
 
 def evaluate_segnet_arl(absent_classes=[]):  
 	#55% on lej15 and 45% on b507 after removing 5 absent classes. 
@@ -692,5 +728,6 @@ if __name__=="__main__":
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']=""
   
-	test_segnet()
+	#test_segnet()
+	evaluate_segnet_camvid_small()
 	# evaluate_segnet_arl()
