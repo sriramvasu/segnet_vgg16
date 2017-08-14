@@ -196,16 +196,16 @@ def batch_norm_layer1(inputT, is_training, scope):
 def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
 	this_name=scope+'_bn';
 	if(params.pretrained==False):
-		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=True,scale=True, updates_collections=None, scope=this_name)
+		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=False,updates_collections=None, scope=this_name)
 	else:
 		if(this_name in params.layer_names):
 			print 'pretrained BN param', this_name, 'with shape', params.weight_data[this_name,'0'].shape;
 			param_initializers=dict()
-			param_initializers['gamma']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
-			param_initializers['beta']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
-			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=trainable,is_training=is_training, scope=this_name) 
+			param_initializers['moving_mean']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
+			param_initializers['moving_variance']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
+			return tf.contrib.layers.batch_norm(inputT,param_initializers=param_initializers,center=False,reuse=reuse,trainable=trainable,is_training=is_training, scope=this_name) 
 		else:
-			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=True,scale=True,scope=this_name) 
+			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=False,scope=this_name) 
 
 def batch_normalization(input1,is_training,scope,params,reuse,trainable=False):
 	this_name=scope+'_bn'
