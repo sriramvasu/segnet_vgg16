@@ -4,7 +4,7 @@ from image_reader import image_reader
 import os
 import math
 from utils_mod import *
-import h5py
+#import h5py
 import fnmatch
 from argparse import ArgumentParser
 

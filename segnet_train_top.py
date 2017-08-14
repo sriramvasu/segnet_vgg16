@@ -82,7 +82,7 @@ class Segnet():
 			pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
-		pool1=dropout(pool1,self.keep_prob,self.is_training)
+		#pool1=dropout(pool1,self.keep_prob,self.is_training)
 
 		print_shape(pool1);
 		# self.rt['conv1_1']=conv1_1
@@ -102,7 +102,7 @@ class Segnet():
 			pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
 		else:
 			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
-		pool2=dropout(pool2,self.keep_prob,self.is_training)
+		#pool2=dropout(pool2,self.keep_prob,self.is_training)
 
 		print_shape(pool2);
 		# self.rt['conv2_1']=conv2_1
@@ -127,7 +127,7 @@ class Segnet():
 			pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
-		pool3=dropout(pool3,self.keep_prob,self.is_training)
+		#pool3=dropout(pool3,self.keep_prob,self.is_training)
 
 		print_shape(pool3);
 		# self.rt['conv3_1']=conv3_1
@@ -153,7 +153,7 @@ class Segnet():
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
 		
-		pool4=dropout(pool4,self.keep_prob,self.is_training)
+		#pool4=dropout(pool4,self.keep_prob,self.is_training)
 		print_shape(pool4);
 
 		# self.rt['conv4_1']=conv4_1
@@ -296,9 +296,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=False)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -320,7 +320,7 @@ def train_segnet():
 	lr_decay_every=5
 	validate_every=1
 	save_every=50
-	base_lr=1e-4
+	base_lr=5e-5
 	img_size=[360,480]
 
 	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
@@ -443,12 +443,13 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	pred=pred1[valid_labels]
 	label_img=label_img[valid_labels]
 	non_labels=[]
-	modpred_img=-1*np.ones(pred.shape)
+	#modpred_img=-1*np.ones(pred.shape)
+	modpred_img=pred[:]
 	non_exist=0
-	# for cl in range(num_classes):
-	# 	t=np.where(pred==cl)
-	# 	modpred_img[t]=int(match_labels[cl][-1])
-	corr_pix=np.where(pred==label_img)[0].size
+	for cl in range(num_classes):
+		t=np.where(pred==cl)
+		modpred_img[t]=int(match_labels[cl][-1])
+	corr_pix=np.where(modpred_img==label_img)[0].size
 	
 	# su=0;matr=np.zeros([num_classes,num_classes])
 	# for cl in range(num_classes):
@@ -467,7 +468,7 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 def test_segnet():
 
 	num_classes=12
-	batch_size_test=2
+	batch_size_test=1
 	train_data_dir='SegNet-Tutorial/CamVid/train/'
 	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
 	test_data_dir='SegNet-Tutorial/CamVid/test/'
@@ -492,7 +493,7 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer())
 	print 'initialized vars'
 	# plt.ion()
-	file=open(os.path.join('match_labels.txt'))
+	file=open(os.path.join('camvid_match_labels.txt'))
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
@@ -679,15 +680,17 @@ def save_hdf5(sess,var_list):
 
 if __name__=="__main__":
 	parser = ArgumentParser()
-	parser.add_argument('-devbox',type=int,default=0)
+	parser.add_argument('-devbox',type=int,default=1)
+	parser.add_argument('-ngpu',type=int,default=0)
 	args = parser.parse_args()
 	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']="2";
+	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
+	  print os.system('echo CUDA_VISBLE_DEVICES')
 	else:
 	  BASE_DIR = '/home/sriram/intern'
-	  os.environ['CUDA_VISIBLE_DEVICES']="";
+	  os.environ['CUDA_VISIBLE_DEVICES']=""
   
-	train_segnet()
+	test_segnet()
 	# evaluate_segnet_arl()
