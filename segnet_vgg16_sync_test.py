@@ -6,7 +6,6 @@ from utils_mod import *
 import matplotlib.pyplot as plt
 from color_map import *
 import h5py
-import fnmatch
 
 class Segnet():
 	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
@@ -326,7 +325,6 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer());
 	print 'initialized vars';
 	plt.ion()
-
 	# h = h5py.File('tf_data1.h5', 'w')
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
@@ -339,13 +337,13 @@ def test_segnet():
 		# print pred
 		# print test_label_batch
 
-		# print 'pred stats'
-		# for i in range(num_classes):
-		# 	print np.where(pred==i)[0].size
+		print 'pred stats'
+		for i in range(num_classes):
+			print np.where(pred==i)[0].size
 
-		# print 'label stats'
-		# for i in range(num_classes):
-		# 	print np.where(test_label_batch==i)[0].size
+		print 'label stats'
+		for i in range(num_classes):
+			print np.where(test_label_batch==i)[0].size
 
 		corr=np.where(test_label_batch==pred)[0].size;
 		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
@@ -373,10 +371,10 @@ def predict_segnet():
 	num_classes=12
 	batch_size_test=2
 	all_dir='SegNet-Tutorial/CamVid/allcamvid/'
-	save_folder='predictions_camvid_another'
+	save_folder='predictions_camvid'
 	save_to=os.path.dirname(os.path.abspath(all_dir))
 	reader_test=single_reader(all_dir,batch_size_test,image_size=[360,480,3]);
-	image_size=reader_test.image_size
+	image_size=reader_test.image_size;
 
 	sess=tf.Session();
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
@@ -407,92 +405,10 @@ def predict_segnet():
 		feed_dict={test_data:test_data_batch};
 		pred=sess.run(prediction,feed_dict=feed_dict);
 		for i in range(pred.shape[0]):
-			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:].astype('uint8'))
+			sp.imsave(os.path.join(path,file_names[i]+'.png'),pred[i,:])
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num
 
 	
-def evaluate_segnet_camvid():   
-	#gives 87.7% accuracy on 11 common classes
-	
-	pred_path='/home/sriram/intern/datasets/SegNet_Output/CamVid_Output/'
-	labels_path='/home/sriram/intern/datasets/CamVid/'
-	num_classes=12
-	file=open(os.path.join(pred_path,'match_labels.txt'))
-	match_labels=file.readlines()
-	file.close()
-	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
-	count=0;s=0
-	for i in [f for f in os.listdir(pred_path) if os.path.isdir(os.path.join(pred_path,f))]:
-		if(i!='test'):
-			continue
-		path1=os.path.join(pred_path,i)
-		for prediction in fnmatch.filter(os.listdir(path1),'*.png'):
-			pred_img=sp.imread(os.path.join(path1,prediction))
-			label_img=sp.imread(os.path.join(labels_path,i+'annot',prediction))
-			modpred_img=pred_img[:]
-			for cl in range(num_classes):
-				t=np.where(pred_img==cl)
-				modpred_img[t]=int(match_labels[cl][-1])
-			
-			#confusion matrix calc
-			confusion_mat=np.zeros([11,11])
-			total_mat=np.zeros([11,11])
-			for cl in range(11):
-				t=np.where(label_img==cl)
-				confusion_mat[cl,:]=confusion_mat[cl,:]+(np.histogram(modpred_img[t],range(11))[1]).reshape(-1)
-				total_mat[cl,:]=total_mat[cl,:]+t[0].size*np.ones(12)
-
-
-
-			
-
-			corr_pix=np.where(modpred_img==label_img)[0].size
-			non_exist=np.where(label_img==11)[0].size
-			total_pix=modpred_img.shape[0]*modpred_img.shape[1]-non_exist
-			accuracy=corr_pix*1.0/total_pix
-			s=s+accuracy
-			count=count+1
-			agg_acc=s/count
-			print i,prediction,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
-	print confusion_mat
-	print total_mat
-
-
-def evaluate_segnet_arl(absent_classes=None):  
-	#55% on lej15 and 45% on b507 after removing 5 absent classes. 
-	#Accuracy suffers slightly upon adding those classes as a general object
-	# Retrain segnet on ira7 dataset
-
-	pred_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/predictions/'
-	labels_path='/home/sriram/intern/datasets/data/data-with-labels/lej15/new_labels/'
-	if absent_classes is None:
-		absent_classes=[2,7,8,10,11]
-	num_classes=12
-	file=open(os.path.join('/home/sriram/intern/datasets/data/data-with-labels/lej15/','match_labels.txt'))
-	match_labels=file.readlines()
-	file.close()
-	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
-	count=0;s=0 
-	for label in fnmatch.filter(os.listdir(labels_path),'*.png'):
-		label_img=sp.imread(os.path.join(labels_path,label))
-		pred_img=sp.imresize(sp.imread(os.path.join(pred_path,label)),label_img.shape,interp='nearest')
-		modpred_img=-1*np.ones(pred_img.shape)
-		for cl in range(num_classes):
-			if cl in absent_classes:
-				continue
-			t=np.where(pred_img==cl)
-			modpred_img[t]=int(match_labels[cl][-1])
-		cond=np.where(np.logical_and(label_img!=255,modpred_img!=-1))
-		corr_pix=np.where(modpred_img[cond]==label_img[cond])[0].size
-		total_pix=cond[0].size
-		accuracy=corr_pix*1.0/total_pix
-		s=s+accuracy
-		count=count+1
-		agg_acc=s/count
-		print label,'img accuracy:',accuracy, 'aggregate accuracy:',agg_acc
-
-
-
 def train_segnet():
 	
 	num_classes=12;
@@ -503,11 +419,10 @@ def train_segnet():
 	validate_every=5;
 	save_every=10
 	base_lr=1e-6;
-	train_data_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/training_set/images/'
-	train_label_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/training_set/new_labels/'
-
-	test_data_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/testing_set/images/'
-	test_label_dir='/home/sriram/intern/datasets/data/data-with-labels/ira3/testing_set/new_labels/'
+	train_data_dir='SegNet-Tutorial/CamVid/train/'
+	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
+	test_data_dir='SegNet-Tutorial/CamVid/test/'
+	test_label_dir='SegNet-Tutorial/CamVid/testannot/'
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train);
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid);
 	image_size=reader.image_size;
@@ -522,7 +437,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]]);
 	count=tf.placeholder(tf.int32,shape=[]);
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path='segnet_road.h5');
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=False,weights_path=None);
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network';
@@ -578,5 +493,5 @@ def save_hdf5(sess,var_list):
 
 
 
-# os.environ['CUDA_VISIBLE_DEVICES']="0";
-evaluate_segnet_camvid()
+os.environ['CUDA_VISIBLE_DEVICES']="0";
+predict_segnet()
