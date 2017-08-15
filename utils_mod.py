@@ -10,7 +10,7 @@ except:
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_nn_ops
 @ops.RegisterGradient("MaxPoolWithArgmax")
-def _MaxPoolWithArgmaxGrad(op, grad):
+def _MaxPoolWithArgmaxGrad(op, grad, some_other_arg):
 	return gen_nn_ops._max_pool_grad(op.inputs[0],op.outputs[0],grad,op.get_attr("ksize"),op.get_attr("strides"),padding=op.get_attr("padding"),data_format='NHWC')
 
 class Param_loader():
@@ -154,7 +154,7 @@ def conv_bn(inputT, k_shape, out_channels, stride, name, phase_train, reuse=Fals
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if batch_norm is True:
-			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+			conv_out = activ_function(batch_norm_layer(bias, phase_train,name,params,reuse=reuse,trainable=trainable))
 		else:
 			conv_out=activ_function(bias)
 	return conv_out
@@ -193,19 +193,20 @@ def batch_norm_layer1(inputT, is_training, scope):
 		lambda: tf.contrib.layers.batch_norm(inputT, trainable=True,is_training=False,updates_collections=None, center=False, scope=scope+"_bn", reuse = True))
 
 
-def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
+def batch_norm_layer(inputT, is_training, scope,params,reuse):
 	this_name=scope+'_bn';
+	print this_name
 	if(params.pretrained==False):
-		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=False,updates_collections=None, scope=this_name)
+		return tf.contrib.layers.batch_norm(inputT,reuse=reuse,is_training=is_training,center=False, updates_collections=None, scope=this_name)
 	else:
 		if(this_name in params.layer_names):
 			print 'pretrained BN param', this_name, 'with shape', params.weight_data[this_name,'0'].shape;
 			param_initializers=dict()
-			param_initializers['moving_mean']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
-			param_initializers['moving_variance']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
-			return tf.contrib.layers.batch_norm(inputT,param_initializers=param_initializers,center=False,reuse=reuse,trainable=trainable,is_training=is_training, scope=this_name) 
+			param_initializers['gamma']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
+			param_initializers['beta']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
+			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=False,is_training=is_training, updates_collections=None, scope=this_name) 
 		else:
-			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=False,scope=this_name) 
+			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=False, updates_collections=None, scope=this_name) 
 
 def batch_normalization(input1,is_training,scope,params,reuse,trainable=False):
 	this_name=scope+'_bn'
