@@ -193,7 +193,7 @@ def batch_norm_layer1(inputT, is_training, scope):
 		lambda: tf.contrib.layers.batch_norm(inputT, trainable=True,is_training=False,updates_collections=None, center=False, scope=scope+"_bn", reuse = True))
 
 
-def batch_norm_layer(inputT, is_training, scope,params,reuse):
+def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
 	this_name=scope+'_bn';
 	print this_name
 	if(params.pretrained==False):
