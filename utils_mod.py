@@ -204,7 +204,7 @@ def batch_norm_layer(inputT, is_training, scope,params,reuse,trainable):
 			param_initializers=dict()
 			param_initializers['gamma']=tf.constant_initializer(params.weight_data[this_name,'0'].reshape([-1]));
 			param_initializers['beta']=tf.constant_initializer(params.weight_data[this_name,'1'].reshape([-1]));
-			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=False,is_training=is_training, updates_collections=None, scope=this_name) 
+			return tf.contrib.layers.batch_norm(inputT, center=True,scale=True, param_initializers=param_initializers,reuse=reuse,trainable=trainable,is_training=is_training, updates_collections=None, scope=this_name) 
 		else:
 			return tf.contrib.layers.batch_norm(inputT, reuse=reuse,is_training=is_training,center=False, updates_collections=None, scope=this_name) 
 

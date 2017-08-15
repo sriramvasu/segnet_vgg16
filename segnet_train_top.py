@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
-from image_reader import *
+from image_reader_test import *
 from utils_mod import *
 from argparse import ArgumentParser
 import fnmatch
@@ -273,9 +273,9 @@ class Segnet():
 		print_shape(pool2_D);
 
 		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_1_D);
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv2_2);
@@ -296,9 +296,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=False)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
@@ -313,31 +313,32 @@ class Segnet():
 		return conv1_1_D;
 
 def train_segnet():
-	num_classes=12
+	num_classes=8
 	n_epochs=100
 	batch_size_train=3
 	batch_size_valid=1
 	lr_decay_every=5
 	validate_every=1
-	save_every=50
+	save_every=30
 	base_lr=5e-5
 	img_size=[360,480]
-
-	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
-	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
-	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	modelfile_name='final_segnet_lejmodel_4layers'
+	logfile_name='lej_train_log_file_4layers'
+	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
-	train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
-	train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
-	test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
-	test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
+	#train_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/train/')
+	#train_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/trainannot/')
+	#test_data_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/test/')
+	#test_label_dir=os.path.join(BASE_DIR,'SegNet-Tutorial/CamVid/testannot/')
 
 	reader=image_reader(train_data_dir,train_label_dir,batch_size_train,image_size=[360,480,3])
 	reader_valid=image_reader(test_data_dir,test_label_dir,batch_size_valid,image_size=[360,480,3])
 	image_size=reader.image_size
 	n_batches=reader.n_batches
-	f_train=open('train_log_file','w+')
+	f_train=open(logfile_name,'w+')
 	sess=tf.Session()
 	
 	train_data=tf.placeholder(tf.float32,shape=[batch_size_train,image_size[0],image_size[1],image_size[2]])
@@ -346,6 +347,7 @@ def train_segnet():
 	valid_labels=tf.placeholder(tf.int64, shape=[batch_size_valid, image_size[0], image_size[1]])
 	count=tf.placeholder(tf.int32,shape=[])
 	rate=tf.placeholder(dtype=tf.float32,shape=[])
+	learning_rate=tf.placeholder(dtype=tf.float32,shape=[])
 	
 	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
@@ -359,7 +361,7 @@ def train_segnet():
 	net.match_labels=match_labels
 
 	net.loss=net.calc_loss(train_logits,train_labels,net.num_classes)
-	learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
+	#learning_rate=tf.train.exponential_decay(base_lr,count,1,1.0/rate)
 	# learning_rate = base_lr*(1/rate)^count
 
 
@@ -376,22 +378,24 @@ def train_segnet():
 	cnt=0
 	dec=4
 	colors=color_map(num_classes)
+	lr_calc=base_lr
 
 	while(reader.epoch<n_epochs):
 		s_train=0;cnt_train=1	
 		while(reader.batch_num<reader.n_batches):
 			[train_data_batch,train_label_batch]=reader.next_batch()
-			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,count:cnt,rate:dec}
+			
+			feed_dict_train={train_data:train_data_batch,train_labels:train_label_batch,learning_rate:lr_calc}
 			[pred,_]=sess.run([prediction_train,net.train_op],feed_dict=feed_dict_train)
 			[corr,total_pix]=transform_labels(pred,train_label_batch,match_labels,num_classes)
 			acc=corr*1.0/total_pix
 			s_train=s_train+acc
-			print 'Learning_rate:',sess.run(learning_rate,feed_dict={count:cnt,rate:dec}),'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate_acc:',s_train*1.0/cnt_train
-			f_train.write('Training'+' learning_rate:'+str(sess.run(learning_rate,feed_dict={count:cnt,rate:dec}))+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+'\n')
+			print 'Learning_rate:',lr_calc,'epoch:',reader.epoch+1,', Batch:',reader.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate_acc:',s_train*1.0/cnt_train
+			f_train.write('Training'+' learning_rate:'+str(lr_calc)+' epoch:'+str(reader.epoch+1)+' Batch:'+str(reader.batch_num)+' Accuracy:'+str(acc)+' aggregate_acc'+str(s_train*1.0/cnt_train)+'\n')
 			cnt_train+=1
 
 		if((reader.epoch+1)%save_every==0):
-			saver.save(sess,'segnet_arlmodel',global_step=(reader.epoch+1))
+			saver.save(sess,modelfile_name,global_step=(reader.epoch+1))
 
 		if((reader.epoch+1)%validate_every==0):
 			reader_valid.reset_reader()
@@ -421,19 +425,17 @@ def train_segnet():
 				# 		sp.imshow(viz[0,:])
 				
 
-				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'aggregate acc:',s_valid*1.0/cnt_valid
-				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+'\n')
+				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,' aggregate acc:',s_valid*1.0/cnt_valid
+				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+' aggregate_acc'+str(s_valid*1.0/cnt_valid)+'\n')
 				cnt_valid+=1
-			print 'increment/decrement?'
+			print 'Change lr/Save model?'
 			char=raw_input()
-			if(char=='d'):
-				cnt+=1
-				print 'enter rate:'
-				dec=float(raw_input())
-			if(char=='i'):
-				cnt-=1
-				print 'enter rate:'
-				dec=float(raw_input())
+			if(char=='c'):
+				print 'Current lr:',lr_calc,'Enter new lr:'
+				lr_calc=float(raw_input())
+			elif(char=='s'):
+				saver.save(sess,modelfile_name,global_step=(reader.epoch+1))
+
 				
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
@@ -446,10 +448,10 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	modpred_img=-1*np.ones(pred.shape)
 	#modpred_img=pred[:]
 	non_exist=0
-	for cl in range(num_classes):
-		t=np.where(pred==cl)
-		modpred_img[t]=int(match_labels[cl][-1])
-	corr_pix=np.where(modpred_img==label_img)[0].size
+	#for cl in range(num_classes):
+	#	t=np.where(pred==cl)
+	#	modpred_img[t]=int(match_labels[cl][-1])
+	corr_pix=np.where(pred==label_img)[0].size
 	
 	# su=0;matr=np.zeros([num_classes,num_classes])
 	# for cl in range(num_classes):
@@ -467,19 +469,23 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 
 def test_segnet():
 
-	num_classes=12
+	num_classes=8
 	batch_size_test=1
 	train_data_dir='SegNet-Tutorial/CamVid/train/'
 	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
-	test_data_dir='SegNet-Tutorial/CamVid/test/'
-	test_label_dir='SegNet-Tutorial/CamVid/testannot/'
+	#test_data_dir='SegNet-Tutorial/CamVid/test/'
+	#test_label_dir='SegNet-Tutorial/CamVid/testannot/'
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+        test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 
+	modelfile_name='final_segnet_lejmodel_4layers'
+	epoch_number=30
 	# test_data_dir='/home/sriram/intern/datasets/pascal/VOC2011/jpeg_images/'
 	# test_label_dir='/home/sriram/intern/datasets/pascal/VOC2011/labels/'
-	reader_test=image_reader(train_data_dir,train_label_dir,batch_size_test,image_size=[360,480,3]);
-	image_size=reader_test.image_size;
+	reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
+	image_size=reader_test.image_size
 
-	sess=tf.Session();
+	sess=tf.Session()
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
 
@@ -492,19 +498,34 @@ def test_segnet():
 	print 'built loss graph'
 	sess.run(tf.global_variables_initializer())
 	print 'initialized vars'
+	saver=tf.train.Saver(tf.trainable_variables())
+	saver.restore(sess,modelfile_name+'-'+str(epoch_number))
+	print 'restored model'
 	# plt.ion()
 	file=open(os.path.join('camvid_match_labels.txt'))
 	match_labels=file.readlines()
 	file.close()
 	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+	
+	colors=color_map(num_classes)
+	s_test=0;count_test=1
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
 		pred=sess.run(prediction,feed_dict=feed_dict)
 		[corr,total_pix]=transform_labels(pred,test_label_batch,match_labels,num_classes)
-		acc=corr*1.0/total_pix
-		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+		viz=np.zeros([pred.shape[0]]+image_size)
+                for cl in range(num_classes):
+                	t=np.where(pred==cl)
+                	viz[t]=colors[cl,:]
 
+		acc=corr*1.0/total_pix
+		s_test=s_test+acc
+		agg_acc=s_test/count_test
+		count_test+=1
+		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
+		sp.imsave('outimgs-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
+		sp.imsave('outimgs_real-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 	
 
 def viz(pred,test_label_batch,num_classes):
@@ -728,6 +749,7 @@ if __name__=="__main__":
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']=""
   
-	#test_segnet()
-	evaluate_segnet_camvid_small()
+	test_segnet()
+	#train_segnet()
+	#evaluate_segnet_camvid_small()
 	# evaluate_segnet_arl()
