@@ -313,7 +313,7 @@ def test_segnet():
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
 
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.h5')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	test_logits=net.inference(test_data,is_training=False,reuse=False);
 	print 'built network';
 	
@@ -324,7 +324,14 @@ def test_segnet():
 	
 	sess.run(tf.global_variables_initializer());
 	print 'initialized vars';
-	plt.ion()
+	
+	file=open(os.path.join('camvid_match_labels.txt'))
+        match_labels=file.readlines()
+        file.close()
+        match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+
+	count=0;s=0.0
+	#plt.ion()
 	# h = h5py.File('tf_data1.h5', 'w')
 	while(reader_test.batch_num<reader_test.n_batches):
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
@@ -337,34 +344,41 @@ def test_segnet():
 		# print pred
 		# print test_label_batch
 
-		print 'pred stats'
-		for i in range(num_classes):
-			print np.where(pred==i)[0].size
+		#print 'pred stats'
+		#for i in range(num_classes):
+		#	print np.where(pred==i)[0].size
 
-		print 'label stats'
-		for i in range(num_classes):
-			print np.where(test_label_batch==i)[0].size
+		#print 'label stats'
+		#for i in range(num_classes):
+		#	print np.where(test_label_batch==i)[0].size
 
-		corr=np.where(test_label_batch==pred)[0].size;
-		acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
-		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc
+		#corr=np.where(test_label_batch==pred)[0].size;
+		#acc=corr*1.0/(np.prod(image_size[:-1])*batch_size_test);
+
+		[corr_pix,total_pix]=transform_labels(pred,test_label_batch,match_labels,num_classes)
+		accuracy=corr_pix*1.0/total_pix
+                s=s+accuracy
+                count=count+1
+                agg_acc=s/count
+
+		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr_pix, ', Accuracy:',accuracy,'aggregate acc:',agg_acc
 		# np.save('temp.npy',out_dict)
 
 		# for i in out_dict:
 		# 	print i
 		# 	print out_dict[i].shape
 			# h.create_dataset(name=i,data=out_dict[i])
-		viz=np.zeros([pred.shape[0]]+image_size)
-		colors=color_map(num_classes)
-		for cl in range(num_classes):
-			t=np.where(pred==cl)
-			viz[t]=colors[cl,:]
-		plt.figure(1)
-		plt.imshow(viz[0,:])
-		plt.figure(2)
-		plt.imshow(test_label_batch[0,:])
-		plt.show()
-		plt.pause(0.05)
+		#viz=np.zeros([pred.shape[0]]+image_size)
+		#colors=color_map(num_classes)
+		#for cl in range(num_classes):
+		#	t=np.where(pred==cl)
+		#	viz[t]=colors[cl,:]
+		#plt.figure(1)
+		#plt.imshow(viz[0,:])
+		#plt.figure(2)
+		#plt.imshow(test_label_batch[0,:])
+		#plt.show()
+		#plt.pause(0.05)
 
 
 def predict_segnet():
@@ -410,6 +424,33 @@ def predict_segnet():
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num
 
 	
+def transform_labels(pred1,label_img,match_labels,num_classes):
+        valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
+        pred=pred1[valid_labels]
+        label_img=label_img[valid_labels]
+        non_labels=[]
+        modpred_img=-1*np.ones(pred.shape)
+        #modpred_img=pred[:]
+        non_exist=0
+        for cl in range(num_classes):
+                t=np.where(pred==cl)
+                modpred_img[t]=int(match_labels[cl][-1])
+        corr_pix=np.where(modpred_img==label_img)[0].size
+
+        # su=0;matr=np.zeros([num_classes,num_classes])
+        # for cl in range(num_classes):
+        #       if(cl not in non_labels):
+        #               t1=label_img==cl
+        #               for pl in range(num_classes):
+        #                       t=np.where(np.logical_and(t1,modpred_img==pl))
+        #                       matr[cl,pl]=t[0].size
+
+        for cl in non_labels:
+                non_exist=non_exist+np.where(label_img==cl)[0].size
+        total_pix=modpred_img.size-non_exist
+        return [corr_pix,total_pix]
+
+
 def train_segnet():
 	
 	num_classes=12;
@@ -495,4 +536,4 @@ def save_hdf5(sess,var_list):
 
 
 os.environ['CUDA_VISIBLE_DEVICES']="1";
-predict_segnet()
+test_segnet()
