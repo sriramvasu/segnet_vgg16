@@ -182,7 +182,7 @@ def atrous_conv(inputT, k_shape, out_channels, dilation_rate, name, phase_train,
 		biases = get_biases(params,var_name='biases', shape=[out_channels],layer_name=name,trainable=trainable,val=0.0)
 		bias = tf.nn.bias_add(c1, biases)
 		if batch_norm is True:
-			conv_out = batch_norm_layer(activ_function(bias), phase_train,name,params,reuse=reuse,trainable=trainable)
+			conv_out = activ_function(batch_norm_layer(bias, phase_train,name,params,reuse=reuse,trainable=trainable))
 		else:
 			conv_out=activ_function(bias)
 	return conv_out
