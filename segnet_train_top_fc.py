@@ -173,7 +173,7 @@ class Segnet():
 		# Upsample 5
 		if(self.is_gpu==True):
 			# pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=conv5_1.get_shape().as_list(), name='upsample5_gpu')
-			pool5_D = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool5_D = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=conv5_1.get_shape().as_list(),name= "upsample5_gpu",phase_train=self.is_training,reuse=self.reuse)
 
 		else:
 			# pool5_D = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -193,7 +193,7 @@ class Segnet():
 		# Upsample 4
 		if(self.is_gpu==True):
 			# pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=conv4_1.get_shape().as_list(), name='upsample4_gpu')
-			pool4_D = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool4_D = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=conv4_1.get_shape().as_list(),name= "upsample4_gpu",phase_train=self.is_training,reuse=self.reuse)
 
 		else:
 			# pool4_D = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -216,7 +216,7 @@ class Segnet():
 		# Upsample3
 		if(self.is_gpu==True):
 			# pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=conv3_1.get_shape().as_list(), name='upsample3_gpu')
-			pool3_D = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool3_D = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=conv3_1.get_shape().as_list(),name= "upsample3_gpu",phase_train=self.is_training,reuse=self.reuse)
 
 		else:
 			# pool3_D = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -237,7 +237,7 @@ class Segnet():
 		# Upsample2
 		if(self.is_gpu==True):
 			# pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
-			pool2_D = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool2_D = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=conv2_1.get_shape().as_list(),name= "upsample2_gpu",phase_train=self.is_training,reuse=self.reuse)
 
 		else:
 			# pool2_D = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -246,9 +246,9 @@ class Segnet():
 		print_shape(pool2_D);
 
 		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_1_D);
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv2_2);
@@ -260,7 +260,7 @@ class Segnet():
 	    # Upsample1
 		if(self.is_gpu==True):
 			# pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=conv1_1.get_shape().as_list(), name='upsample1_gpu')
-			pool1_D = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool1_D = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=conv1_1.get_shape().as_list(),name= "upsample1_gpu",phase_train=self.is_training,reuse=self.reuse)
 
 		else:
 			# pool1_D = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -268,9 +268,9 @@ class Segnet():
 		print_shape(pool1_D);
 
 		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
