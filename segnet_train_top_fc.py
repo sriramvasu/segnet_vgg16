@@ -79,8 +79,10 @@ class Segnet():
 		# 	pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu')
 		# else:
 		# 	pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu')
-		pool1=atrous_conv(conv1_2, [3,3], 64, 2,'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
-		
+		# pool1=atrous_conv(conv1_2, [3,3], 64, 2,'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		conv1_2=downsample(conv1_2,[2,2])
+		pool1=conv_bn(conv1_2, [3,3], 64, [1,1],'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+
 		#pool1=dropout(pool1,self.keep_prob,self.is_training)
 		print_shape(pool1);
 
@@ -96,10 +98,12 @@ class Segnet():
 		# 	pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu')
 		# else:
 		# 	pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu')
-		pool2=atrous_conv(conv2_2, [3,3], 128, 2,'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		# pool2=atrous_conv(conv2_2, [3,3], 128, 2,'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		conv2_2=downsample(conv2_2,[2,2])
+		pool2=conv_bn(conv2_2, [3,3], 128, [1,1],'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+
 
 		#pool2=dropout(pool2,self.keep_prob,self.is_training)
-
 		print_shape(pool2);
 
 
@@ -117,11 +121,11 @@ class Segnet():
 		# 	pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu')
 		# else:
 		# 	pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu')
-		pool3=atrous_conv(conv3_3, [3,3], 256, 2,'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
-
+		# pool3=atrous_conv(conv3_3, [3,3], 256, 2,'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		conv3_3=downsample(conv3_3,[2,2])
+		pool3=conv_bn(conv3_3, [3,3], 256, [1,1],'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 		#pool3=dropout(pool3,self.keep_prob,self.is_training)
-
 		print_shape(pool3);
 
 		# Layer 4
@@ -138,10 +142,12 @@ class Segnet():
 		# 	pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu')
 		# else:
 		# 	pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu')
-		pool4=atrous_conv(conv4_3, [3,3], 512, 2,'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		# pool4=atrous_conv(conv4_3, [3,3], 512, 2,'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		conv4_3=downsample(conv4_3,[2,2])
+		pool4=conv_bn(conv4_3, [3,3], 512, [1,1],'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		
 		#pool4=dropout(pool4,self.keep_prob,self.is_training)
-		print_shape(pool4);
+		print_shape(pool4)
 
 
 		# Layer 5
@@ -158,8 +164,12 @@ class Segnet():
 		# 	pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
 		# else:
 		# 	pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
-		pool5=atrous_conv(conv5_3, [3,3], 512, 2,'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
-		print_shape(pool5);
+		# pool5=atrous_conv(conv5_3, [3,3], 512, 2,'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+
+		conv5_3=downsample(conv5_3,[2,2])
+		pool5=conv_bn(conv5_3, [3,3], 512, [1,1],'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+
+		print_shape(pool5)
 
 
 
@@ -270,7 +280,7 @@ class Segnet():
 		# decode 4
 		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
 		print_shape(conv1_1_D);
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
 		# print_shape(deconv1_2);
