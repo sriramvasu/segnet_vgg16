@@ -30,7 +30,8 @@ def convert_labels():
 		sp.imsave(os.getcwd()+'/labels/'+lol[0]+'_label'+'.'+lol[1],rt_new.astype('uint8'))
 
 
-
+def h5pytonpy(h5filename,npyfilename):
+	
 
 def correct_file(path):
 	f=open(path)

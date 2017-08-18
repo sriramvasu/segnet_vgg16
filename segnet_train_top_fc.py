@@ -81,17 +81,17 @@ class Segnet():
 		# 	pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu')
 		# pool1=atrous_conv(conv1_2, [3,3], 64, 2,'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		conv1_2=downsample(conv1_2,[2,2])
-		pool1=conv_bn(conv1_2, [3,3], 64, [1,1],'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		pool1=conv_bn(conv1_2, [3,3], 64, [1,1],'atr_conv1_3', self.is_training,reuse=self.reuse,params=self.params,activation='none')
 
-		#pool1=dropout(pool1,self.keep_prob,self.is_training)
+		pool1=dropout(pool1,self.keep_prob,self.is_training)
 		print_shape(pool1);
 
 
 		# Layer 2
-		conv2_1=conv_bn(pool1,[3,3],128,[1,1],name='conv2_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv2_1=conv_bn(pool1,[3,3],128,[1,1],name='conv2_1',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_1);
 
-		conv2_2=conv_bn(conv2_1,[3,3],128,[1,1],name='conv2_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv2_2=conv_bn(conv2_1,[3,3],128,[1,1],name='conv2_2',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv2_2);
 
 		# if(self.is_gpu==True):
@@ -100,21 +100,21 @@ class Segnet():
 		# 	pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu')
 		# pool2=atrous_conv(conv2_2, [3,3], 128, 2,'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		conv2_2=downsample(conv2_2,[2,2])
-		pool2=conv_bn(conv2_2, [3,3], 128, [1,1],'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		pool2=conv_bn(conv2_2, [3,3], 128, [1,1],'atr_conv2_3', self.is_training,reuse=self.reuse,params=self.params,activation='none')
 
 
-		#pool2=dropout(pool2,self.keep_prob,self.is_training)
+		pool2=dropout(pool2,self.keep_prob,self.is_training)
 		print_shape(pool2);
 
 
 		# Layer 3
-		conv3_1=conv_bn(pool2,[3,3],256,[1,1],name='conv3_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv3_1=conv_bn(pool2,[3,3],256,[1,1],name='conv3_1',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv3_1);
 
-		conv3_2=conv_bn(conv3_1,[3,3],256,[1,1],name='conv3_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv3_2=conv_bn(conv3_1,[3,3],256,[1,1],name='conv3_2',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv3_2);
 
-		conv3_3=conv_bn(conv3_2,[3,3],256,[1,1],name='conv3_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv3_3=conv_bn(conv3_2,[3,3],256,[1,1],name='conv3_3',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv3_3);
 		
 		# if(self.is_gpu==True):
@@ -123,19 +123,19 @@ class Segnet():
 		# 	pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu')
 		# pool3=atrous_conv(conv3_3, [3,3], 256, 2,'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		conv3_3=downsample(conv3_3,[2,2])
-		pool3=conv_bn(conv3_3, [3,3], 256, [1,1],'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		pool3=conv_bn(conv3_3, [3,3], 256, [1,1],'atr_conv3_4', self.is_training,reuse=self.reuse,params=self.params,activation='none')
 
-		#pool3=dropout(pool3,self.keep_prob,self.is_training)
+		pool3=dropout(pool3,self.keep_prob,self.is_training)
 		print_shape(pool3);
 
 		# Layer 4
-		conv4_1=conv_bn(pool3,[3,3],512,[1,1],name='conv4_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv4_1=conv_bn(pool3,[3,3],512,[1,1],name='conv4_1',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv4_1);
 
-		conv4_2=conv_bn(conv4_1,[3,3],512,[1,1],name='conv4_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv4_2=conv_bn(conv4_1,[3,3],512,[1,1],name='conv4_2',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv4_2);
 
-		conv4_3=conv_bn(conv4_2,[3,3],512,[1,1],name='conv4_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv4_3=conv_bn(conv4_2,[3,3],512,[1,1],name='conv4_3',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv4_3);
 
 		# if(self.is_gpu==True):
@@ -144,20 +144,20 @@ class Segnet():
 		# 	pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu')
 		# pool4=atrous_conv(conv4_3, [3,3], 512, 2,'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 		conv4_3=downsample(conv4_3,[2,2])
-		pool4=conv_bn(conv4_3, [3,3], 512, [1,1],'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		pool4=conv_bn(conv4_3, [3,3], 512, [1,1],'atr_conv4_4', self.is_training,reuse=self.reuse,params=self.params,activation='none')
 		
-		#pool4=dropout(pool4,self.keep_prob,self.is_training)
+		pool4=dropout(pool4,self.keep_prob,self.is_training)
 		print_shape(pool4)
 
 
 		# Layer 5
-		conv5_1=conv_bn(pool4,[3,3],512,[1,1],name='conv5_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv5_1=conv_bn(pool4,[3,3],512,[1,1],name='conv5_1',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv5_1);
 
-		conv5_2=conv_bn(conv5_1,[3,3],512,[1,1],name='conv5_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv5_2=conv_bn(conv5_1,[3,3],512,[1,1],name='conv5_2',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv5_2);
 
-		conv5_3=conv_bn(conv5_2,[3,3],512,[1,1],name='conv5_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+		conv5_3=conv_bn(conv5_2,[3,3],512,[1,1],name='conv5_3',phase_train=self.is_training,params=self.params,reuse=self.reuse)
 		print_shape(conv5_3);
 
 		# if(self.is_gpu==True):
@@ -167,7 +167,7 @@ class Segnet():
 		# pool5=atrous_conv(conv5_3, [3,3], 512, 2,'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
 
 		conv5_3=downsample(conv5_3,[2,2])
-		pool5=conv_bn(conv5_3, [3,3], 512, [1,1],'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,batch_norm=False,activation='none')
+		pool5=conv_bn(conv5_3, [3,3], 512, [1,1],'atr_conv5_4', self.is_training,reuse=self.reuse,params=self.params,activation='none')
 
 		print_shape(pool5)
 
@@ -184,7 +184,7 @@ class Segnet():
 		if(self.is_gpu==True):
 			# pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=conv5_1.get_shape().as_list(), name='upsample5_gpu')
 			pool5_D = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=conv5_1.get_shape().as_list(),name= "upsample5_gpu",phase_train=self.is_training,reuse=self.reuse)
-
+			pool5_D= dropout(pool5_D,self.keep_prob,self.is_training)
 		else:
 			# pool5_D = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool5_D=upsample(pool5,out_shape=conv5_1.get_shape().as_list())
@@ -192,11 +192,11 @@ class Segnet():
 
 		# decode 4
 		conv5_3_D = conv_bn(pool5_D, [3,3], 512,[1,1], name="conv5_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_3_D);
+		print_shape(conv5_3_D)
 		conv5_2_D = conv_bn(conv5_3_D, [3,3], 512,[1,1], name="conv5_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_2_D);
+		print_shape(conv5_2_D)
 		conv5_1_D = conv_bn(conv5_2_D, [3,3], 512,[1,1], name="conv5_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_1_D);
+		print_shape(conv5_1_D)
 
 
 	
@@ -204,6 +204,7 @@ class Segnet():
 		if(self.is_gpu==True):
 			# pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=conv4_1.get_shape().as_list(), name='upsample4_gpu')
 			pool4_D = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=conv4_1.get_shape().as_list(),name= "upsample4_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool4_D= dropout(pool4_D,self.keep_prob,self.is_training)
 
 		else:
 			# pool4_D = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -212,11 +213,11 @@ class Segnet():
 
 		# decode 4
 		conv4_3_D = conv_bn(pool4_D, [3,3], 512,[1,1], name="conv4_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_3_D);
+		print_shape(conv4_3_D)
 		conv4_2_D = conv_bn(conv4_3_D, [3,3], 512,[1,1], name="conv4_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_2_D);
+		print_shape(conv4_2_D)
 		conv4_1_D = conv_bn(conv4_2_D, [3,3], 256,[1,1], name="conv4_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_1_D);
+		print_shape(conv4_1_D)
 
 
 
@@ -227,6 +228,7 @@ class Segnet():
 		if(self.is_gpu==True):
 			# pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=conv3_1.get_shape().as_list(), name='upsample3_gpu')
 			pool3_D = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=conv3_1.get_shape().as_list(),name= "upsample3_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool3_D= dropout(pool3_D,self.keep_prob,self.is_training)
 
 		else:
 			# pool3_D = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -235,11 +237,11 @@ class Segnet():
 
 		# decode 4
 		conv3_3_D = conv_bn(pool3_D, [3,3], 256,[1,1], name="conv3_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_3_D);
+		print_shape(conv3_3_D)
 		conv3_2_D = conv_bn(conv3_3_D, [3,3], 256,[1,1], name="conv3_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_2_D);
+		print_shape(conv3_2_D)
 		conv3_1_D = conv_bn(conv3_2_D, [3,3], 128,[1,1], name="conv3_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_1_D);
+		print_shape(conv3_1_D)
 
 
 	
@@ -248,20 +250,21 @@ class Segnet():
 		if(self.is_gpu==True):
 			# pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
 			pool2_D = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=conv2_1.get_shape().as_list(),name= "upsample2_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool2_D= dropout(pool2_D,self.keep_prob,self.is_training)
 
 		else:
 			# pool2_D = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_cpu",phase_train=self.is_training,reuse=self.reuse)
 			pool2_D=upsample(conv3_1_D,out_shape=conv2_1.get_shape().as_list())
 
-		print_shape(pool2_D);
+		print_shape(pool2_D)
 
 		# decode 4
 		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv2_2_D);
+		print_shape(conv2_2_D)
 		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv2_1_D);
+		print_shape(conv2_1_D)
 		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
-		# print_shape(deconv2_2);
+		# print_shape(deconv2_2)
 
 
 
@@ -271,6 +274,7 @@ class Segnet():
 		if(self.is_gpu==True):
 			# pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=conv1_1.get_shape().as_list(), name='upsample1_gpu')
 			pool1_D = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=conv1_1.get_shape().as_list(),name= "upsample1_gpu",phase_train=self.is_training,reuse=self.reuse)
+			pool1_D= dropout(pool1_D,self.keep_prob,self.is_training)
 
 		else:
 			# pool1_D = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_cpu",phase_train=self.is_training,reuse=self.reuse)
@@ -279,15 +283,15 @@ class Segnet():
 
 		# decode 4
 		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
-		print_shape(conv1_2_D);
+		print_shape(conv1_2_D)
 		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
-		print_shape(conv1_1_D);
+		print_shape(conv1_1_D)
 		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
-		# print_shape(deconv1_2);
+		# print_shape(deconv1_2)
 
 		# Fully connected layer
 		# self.logits=fc_convol(conv_decode1,[1,1],self.num_classes,name='fc_classify1',params=self.params);  
-		return conv1_1_D;
+		return conv1_1_D
 
 def train_segnet():
 	num_classes=8
@@ -296,11 +300,11 @@ def train_segnet():
 	batch_size_valid=1
 	lr_decay_every=5
 	validate_every=1
-	save_every=30
+	save_every=33
 	base_lr=5e-5
 	img_size=[360,480]
-	modelfile_name='final_segnet_lejmodel_4layers'
-	logfile_name='lej_train_log_file_4layers'
+	modelfile_name='retrain_atr_moment'
+	logfile_name='lej_retrain_atr_moment'
 	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
 	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
 	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
@@ -326,7 +330,7 @@ def train_segnet():
 	rate=tf.placeholder(dtype=tf.float32,shape=[])
 	learning_rate=tf.placeholder(dtype=tf.float32,shape=[])
 	
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='/home/sriram/intern/segnet_road.h5')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
 	train_logits=net.inference(train_data, is_training=True,reuse=False)
 	valid_logits=net.inference(valid_data, is_training=False,reuse=True)
 	print 'built network'
@@ -346,10 +350,18 @@ def train_segnet():
 	# accuracy=tf.size(tf.where(prediction==train_labels)[0]);
 
 	print 'built loss graph'
-	saver=tf.train.Saver(tf.trainable_variables())
+	moment_vars=[]
+	for var in tf.global_variables():
+		if('moving_mean' in var.name or 'moving_variance' in var.name):
+			moment_vars.append(var)
+	saved_vars=tf.trainable_variables()+moment_vars
+	saver=tf.train.Saver(saved_vars)
+	print saved_vars
 	sess.run(tf.global_variables_initializer())
+	#saver.restore(sess,'atr_models/final_segnet_lejmodel_atrlayers-90')
 	# saver.restore(sess,'segnet_model')
 	print 'initialized vars'
+	#print tf.trainable_variables()
 	cnt=0
 	dec=4
 	colors=color_map(num_classes)
@@ -387,13 +399,13 @@ def train_segnet():
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,' aggregate acc:',s_valid*1.0/cnt_valid
 				f_train.write('Validation'+' epoch:'+str(reader_valid.epoch+1)+' Batch:'+str(reader_valid.batch_num)+' Accuracy:'+str(acc)+' aggregate_acc'+str(s_valid*1.0/cnt_valid)+'\n')
 				cnt_valid+=1
-			print 'Change lr/Save model?'
-			char=raw_input()
-			if(char=='c'):
-				print 'Current lr:',lr_calc,'Enter new lr:'
-				lr_calc=float(raw_input())
-			elif(char=='s'):
-				saver.save(sess,modelfile_name,global_step=(reader.epoch+1))
+			#print 'Change lr/Save model?'
+			#char=raw_input()
+			#if(char=='c'):
+			#	print 'Current lr:',lr_calc,'Enter new lr:'
+			#	lr_calc=float(raw_input())
+			#elif(char=='s'):
+			#	saver.save(sess,modelfile_name,global_step=(reader.epoch+1))
 
 				
 		reader.epoch=reader.epoch+1
@@ -436,9 +448,9 @@ def test_segnet():
 	#test_label_dir='SegNet-Tutorial/CamVid/testannot/'
 	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
 	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
-
-	modelfile_name='final_segnet_lejmodel_4layers'
-	epoch_number=30
+	
+	modelfile_name='atr_models/final_segnet_lejmodel_atrlayers'
+	epoch_number=90
 	# test_data_dir='/home/sriram/intern/datasets/pascal/VOC2011/jpeg_images/'
 	# test_label_dir='/home/sriram/intern/datasets/pascal/VOC2011/labels/'
 	reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
@@ -452,12 +464,13 @@ def test_segnet():
 	test_logits=net.inference(test_data,is_training=False,reuse=False);
 	print 'built network';
 	prediction=tf.argmax(test_logits,axis=3);
-	net.rt['argmax']=prediction
+	#net.rt['argmax']=prediction
 	# accuracy=tf.size(tf.where(prediction==test_labels)[0]);
 	print 'built loss graph'
 	sess.run(tf.global_variables_initializer())
 	print 'initialized vars'
 	saver=tf.train.Saver(tf.trainable_variables())
+	print '\n',tf.global_variables(),'\n'
 	saver.restore(sess,modelfile_name+'-'+str(epoch_number))
 	print 'restored model'
 	# plt.ion()
@@ -483,8 +496,8 @@ def test_segnet():
 		agg_acc=s_test/count_test
 		count_test+=1
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
-		sp.imsave('outimgs-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
-		sp.imsave('outimgs_real-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
+		#sp.imsave('outimgs-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
+		#sp.imsave('outimgs_real-'+modelfile_name+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 	
 
 def viz(pred,test_label_batch,num_classes):
@@ -696,7 +709,7 @@ def save_hdf5(sess,var_list):
 
 if __name__=="__main__":
 	parser = ArgumentParser()
-	parser.add_argument('-devbox',type=int,default=0)
+	parser.add_argument('-devbox',type=int,default=1)
 	parser.add_argument('-ngpu',type=int,default=0)
 	args = parser.parse_args()
 	
@@ -707,7 +720,7 @@ if __name__=="__main__":
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']=""
-  
+  	#test_segnet()
 	train_segnet()
 	#train_segnet()
 	#evaluate_segnet_camvid_small()

@@ -204,9 +204,12 @@ class DCGAN():
 
 
 def train_DCGAN():
-	f=h5py.File('mnist.h5','r')
-	x_train=f['x_train'][:]
-	y_train=f['y_train'][:]
+	#f=h5py.File('mnist.h5','r')
+	#x_train=f['x_train'][:]
+	#y_train=f['y_train'][:]
+	rt=np.load('mnist.npy')[()]
+	x_train=rt['x_train']
+	y_train=rt['y_train']
 	x_train=(2*x_train.astype(np.float32)-127)/127
 	batch_size=50
 	save_every=1
@@ -280,14 +283,15 @@ def next_batch(x_train,batch_size):
 
 if __name__=="__main__":
 	parser = ArgumentParser()
-	parser.add_argument('-devbox',type=int,default=0)
+	parser.add_argument('-devbox',type=int,default=1)
+	parser.add_argument('-ngpu',type=int,default=0)
 	args = parser.parse_args()
 	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']="1";
+	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
 	else:
 	  BASE_DIR = '/home/sriram/intern'
-	  os.environ['CUDA_VISIBLE_DEVICES']="";
+	  os.environ['CUDA_VISIBLE_DEVICES']=""
   
 	train_DCGAN()
