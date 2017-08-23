@@ -270,6 +270,12 @@ def upsample(x,k_shape=[2,2],name='upsample',out_shape=None):
 def downsample(x,k_shape=[2,2],name='downsample',out_shape=None):
 	return x[:,0::k_shape[0],0::k_shape[1],:]
 
+def own_maxpool_withargmax(x,k_shape,stride,name):
+	shape=x.get_shape().as_list()
+	x1=tf.transpose(x,[1,2,0,3])
+	x3=tf.reshape(x1,[shape[1]/k_shape[0],shape[2]/k_shape[1],-1])
+
+
 def upsample_with_pool_mask(updates, mask, ksize=[1, 2, 2, 1],out_shape=None,name=None):
 	input_shape=tf.shape(updates)
 	# input_shape = updates.get_shape().as_list()

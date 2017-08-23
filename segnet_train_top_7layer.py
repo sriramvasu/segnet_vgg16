@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 import fnmatch
 from color_map import *
 import shutil
+import sys
 try:
   import h5py
   import matplotlib.pyplot as plt
@@ -29,7 +30,8 @@ class Segnet():
 		self.x=x
 		self.is_training=is_training
 		self.reuse=reuse
-		self.logits=self.build_network()
+		with tf.device('/cpu:0'):
+			self.logits=self.build_network()
 		return self.logits
 
 	def calc_loss(self,logits,labels,num_classes,weighted=False,weights=None):
@@ -67,6 +69,7 @@ class Segnet():
 		# with tf.variable_scope('preprocess',dtype=tf.float32):
 		# 	mean = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 		# 	self.inp_tensor = self.x-mean;
+
 		self.rt=dict()
 		self.inp_tensor=self.x
 
@@ -80,7 +83,8 @@ class Segnet():
 		print_shape(conv1_2);
 
 		if(self.is_gpu==True):
-			pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
+			with tf.device('/gpu:0'):
+				pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
 		pool1=dropout(pool1,self.keep_prob,self.is_training)
@@ -100,7 +104,8 @@ class Segnet():
 		print_shape(conv2_2);
 
 		if(self.is_gpu==True):
-			pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
+			with tf.device('/gpu:0'):
+				pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
 		else:
 			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
 		pool2=dropout(pool2,self.keep_prob,self.is_training)
@@ -125,7 +130,8 @@ class Segnet():
 		print_shape(conv3_3);
 		
 		if(self.is_gpu==True):
-			pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+			with tf.device('/gpu:0'):
+				pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
 		pool3=dropout(pool3,self.keep_prob,self.is_training)
@@ -150,7 +156,8 @@ class Segnet():
 		print_shape(conv4_3);
 
 		if(self.is_gpu==True):
-			pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
+			with tf.device('/gpu:0'):
+				pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
 		
@@ -176,7 +183,8 @@ class Segnet():
 		print_shape(conv5_3);
 
 		if(self.is_gpu==True):
-			pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
+			with tf.device('/gpu:0'):
+				pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
 		else:
 			pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
 
@@ -443,7 +451,7 @@ def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir):
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
 
-def transform_labels(pred1,label_img,match_labels,num_classes):
+def transform_labels(pred1,label_img,num_classes,match_labels=None):
 	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
 	pred=pred1[valid_labels]
 	label_img=label_img[valid_labels]
@@ -474,7 +482,7 @@ def transform_labels(pred1,label_img,match_labels,num_classes):
 	total_pix=modpred_img.size-non_exist
 	return [corr_pix,total_pix]
 
-def transform_labels_perclass(pred1,label_img,match_labels,num_classes):
+def transform_labels_perclass(pred1,label_img,num_classes,match_labels=None):
  	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
         pred=pred1[valid_labels]
         label_img=label_img[valid_labels]
@@ -512,21 +520,23 @@ def test_segnet():
 	train_label_dir='SegNet-Tutorial/CamVid/trainannot/'
 	#test_data_dir='SegNet-Tutorial/CamVid/test/'
 	#test_label_dir='SegNet-Tutorial/CamVid/testannot/'
-	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
-        test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+	data_file_list=''
 
-	modelfile_name='retrain_models/retrain_4layer_moment'
-	epoch_number=99
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+
+	modelfile_name='/home/sriram/intern/models-trial1/retrain-7layer-output/full-training/trial1/modelfile_full7layer'
+	epoch_number=98
 	# test_data_dir='/home/sriram/intern/datasets/pascal/VOC2011/jpeg_images/'
 	# test_label_dir='/home/sriram/intern/datasets/pascal/VOC2011/labels/'
-	reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
+	reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3],file_name_list=data_file_list)
 	image_size=reader_test.image_size
 
 	sess=tf.Session()
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
 
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
 	test_logits=net.inference(test_data,is_training=False,reuse=False);
 	print 'built network';
 	prediction=tf.argmax(test_logits,axis=3);
@@ -536,19 +546,18 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer())
 	print 'initialized vars'
 	moment_vars=[]
-        for var in tf.global_variables():
-                if('moving_mean' in var.name or 'moving_variance' in var.name):
-                        moment_vars.append(var)
-
-        saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
+	for var in tf.global_variables():
+		if('moving_mean' in var.name or 'moving_variance' in var.name):
+			moment_vars.append(var)
+	saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
 
 	saver.restore(sess,modelfile_name+'-'+str(epoch_number))
 	print 'restored model'
 	# plt.ion()
-	file=open(os.path.join('camvid_match_labels.txt'))
-	match_labels=file.readlines()
-	file.close()
-	match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
+	# file=open(os.path.join('camvid_match_labels.txt'))
+	# match_labels=file.readlines()
+	# file.close()
+	# match_labels=[line.splitlines()[0].split(' ') for line in match_labels]
 	
 	colors=color_map(num_classes)
 	s_test=0;count_test=1
@@ -556,12 +565,11 @@ def test_segnet():
 		[test_data_batch,test_label_batch]=reader_test.next_batch();
 		feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
 		pred=sess.run(prediction,feed_dict=feed_dict)
-		[corr,total_pix,per_class1,per_class2]=transform_labels_perclass(pred,test_label_batch,match_labels,num_classes)
-
+		[corr,total_pix,per_class1,per_class2]=transform_labels_perclass(pred,test_label_batch,num_classes)
 		viz=np.zeros([pred.shape[0]]+image_size)
-                for cl in range(num_classes):
-                	t=np.where(pred==cl)
-                	viz[t]=colors[cl,:]
+		for cl in range(num_classes):
+			t=np.where(pred==cl)
+			viz[t]=colors[cl,:]
 
 		acc=corr*1.0/total_pix
 		s_test=s_test+acc
@@ -571,9 +579,74 @@ def test_segnet():
 		print per_class2
 		print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
 		print '\n'
-		sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
-		sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
+		# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
+		# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 	
+
+def test_models(trial=1):
+	path='/home/sriram/intern/models-trial1'
+
+	n_layers=7
+	path1=os.path.join(path,'retrain-'+str(n_layers)+'layer-output')
+
+	num_classes=8
+	batch_size_test=1
+	#test_data_dir='SegNet-Tutorial/CamVid/test/'
+	#test_label_dir='SegNet-Tutorial/CamVid/testannot/'
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+
+	# test_data_dir='/home/sriram/intern/datasets/pascal/VOC2011/jpeg_images/'
+	# test_label_dir='/home/sriram/intern/datasets/pascal/VOC2011/labels/'
+	reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
+	image_size=reader_test.image_size
+
+	sess=tf.Session()
+	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
+	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
+
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
+	test_logits=net.inference(test_data,is_training=False,reuse=False);
+	print 'built network';
+	prediction=tf.argmax(test_logits,axis=3)
+
+
+	#net.rt['argmax']=prediction
+	# accuracy=tf.size(tf.where(prediction==test_labels)[0]);
+	print 'built loss graph'
+	sess.run(tf.global_variables_initializer())
+	print 'initialized vars'
+	moment_vars=[]
+	for var in tf.global_variables():
+		if('moving_mean' in var.name or 'moving_variance' in var.name):
+			moment_vars.append(var)
+	saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
+	
+	for name in os.listdir(path1):
+		path2=os.path.join(path1,name,'trial'+str(trial))
+		modelfile_name=os.path.join(path2,'modelfile_7layer')
+		epoch_number=98
+		saver.restore(sess,os.path.join(path,modelfile_name)+'-'+str(epoch_number))
+		s_test=0;count_test=1
+		while(reader_test.batch_num<reader_test.n_batches):
+			[test_data_batch,test_label_batch]=reader_test.next_batch();
+			feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
+			pred=sess.run(prediction,feed_dict=feed_dict)
+			[corr,total_pix]=transform_labels(pred,test_label_batch,num_classes)
+			# viz=np.zeros([pred.shape[0]]+image_size)
+			# for cl in range(num_classes):
+			# 	t=np.where(pred==cl)
+			# 	viz[t]=colors[cl,:]
+
+			acc=corr*1.0/total_pix
+			s_test=s_test+acc
+			agg_acc=s_test/count_test
+			count_test+=1
+			print 'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
+			print '\n'
+			# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
+			# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
+		
 
 def viz(pred,test_label_batch,num_classes):
 	viz=np.zeros([pred.shape[0]]+image_size)
@@ -784,63 +857,64 @@ def save_hdf5(sess,var_list):
 
 if __name__=="__main__":
 	parser = ArgumentParser()
-	parser.add_argument('-devbox',type=int,default=1)
+	parser.add_argument('-devbox',type=int,default=0)
 	parser.add_argument('-ngpu',type=int,default=0)
 	parser.add_argument('-trial',type=int,default=-1)
 	args = parser.parse_args()
-	if args.trial == -1:
-		print "Enter -trial option"
-		sys.exit()
+	# if args.trial == -1:
+	# 	print "Enter -trial option"
+	# 	sys.exit()
 
-	n_layers=7	
+	# n_layers=7	
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
 	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
 	  print os.system('echo CUDA_VISBLE_DEVICES')
 	else:
 	  BASE_DIR = '/home/sriram/intern'
-	  os.environ['CUDA_VISIBLE_DEVICES']=""
-	lis=['full','half','third','quarter']
-	mfile_outdirs=['retrain-7layer-output/'+i+'-training/trial'+str(args.trial)+'/' for i in lis]
-	mfile_names=['modelfile_'+i+str(n_layers)+'layer'for i in lis]
-	lfile_names=['logfile_'+i+str(n_layers)+'layer' for i in lis]
+	  os.environ['CUDA_VISIBLE_DEVICES']="0"
+	# lis=['full','half','third','quarter']
+	# mfile_outdirs=['retrain-'+str(n_layers)+'layer-output/'+i+'-training/trial'+str(args.trial)+'/' for i in lis]
+	# mfile_names=['modelfile_'+i+str(n_layers)+'layer'for i in lis]
+	# lfile_names=['logfile_'+i+str(n_layers)+'layer' for i in lis]
 
-        train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-        train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
-        test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
-        test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
 
-	total=len(os.listdir(train_data_dir))
-	tr_num=[int(total),int(total/2),int(total/3),int(total/4)]
-	scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir'+str(n_layers))
-        scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir'+str(n_layers))
-	if not os.path.isdir(scratch_train_data_dir):
-        	os.makedirs(scratch_train_data_dir)
-        if not os.path.isdir(scratch_train_label_dir):
-        	os.makedirs(scratch_train_label_dir)
+	# total=len(os.listdir(train_data_dir))
+	# tr_num=[int(total),int(total/2),int(total/3),int(total/4)]
+	# scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir'+str(n_layers))
+	# scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir'+str(n_layers))
+	# if not os.path.isdir(scratch_train_data_dir):
+ #        	os.makedirs(scratch_train_data_dir)
+ #        if not os.path.isdir(scratch_train_label_dir):
+ #        	os.makedirs(scratch_train_label_dir)
 
-	for modelfile_name,logfile_name,n_train_samples,outdir in zip(mfile_names,lfile_names,tr_num,mfile_outdirs):
-		outdir = os.path.join(os.getcwd(),outdir)
-		if not os.path.isdir(outdir):
-			os.system('mkdir -p %s'%outdir)
+	# for modelfile_name,logfile_name,n_train_samples,outdir in zip(mfile_names,lfile_names,tr_num,mfile_outdirs):
+	# 	outdir = os.path.join(os.getcwd(),outdir)
+	# 	if not os.path.isdir(outdir):
+	# 		os.system('mkdir -p %s'%outdir)
 	
         		
-		if(len(os.listdir(scratch_train_data_dir))!=0):
-			for name in os.listdir(scratch_train_data_dir):
-				os.remove(os.path.join(scratch_train_data_dir,name))
-		if(len(os.listdir(scratch_train_label_dir))!=0):
-			for name in os.listdir(scratch_train_label_dir):
-				os.remove(os.path.join(scratch_train_label_dir,name))
+	# 	if(len(os.listdir(scratch_train_data_dir))!=0):
+	# 		for name in os.listdir(scratch_train_data_dir):
+	# 			os.remove(os.path.join(scratch_train_data_dir,name))
+	# 	if(len(os.listdir(scratch_train_label_dir))!=0):
+	# 		for name in os.listdir(scratch_train_label_dir):
+	# 			os.remove(os.path.join(scratch_train_label_dir,name))
 
-		rand_index=np.random.randint(0,total,[n_train_samples])
-		image_filenames=np.array(fnmatch.filter(os.listdir(train_data_dir),'*.png'))[rand_index]
-		for name in image_filenames:
-			shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
-			shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
+	# 	rand_index=np.random.randint(0,total,[n_train_samples])
+	# 	image_filenames=np.array(fnmatch.filter(os.listdir(train_data_dir),'*.png'))[rand_index]
+	# 	for name in image_filenames:
+	# 		shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
+	# 		shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
 		
-		train_segnet(os.path.join(outdir,modelfile_name),os.path.join(logfile_name),scratch_train_data_dir,scratch_train_label_dir)
-		tf.reset_default_graph()
+	# 	train_segnet(os.path.join(outdir,modelfile_name),os.path.join(logfile_name),scratch_train_data_dir,scratch_train_label_dir)
+	# 	tf.reset_default_graph()
 
-	#test_segnet()
+	# test_segnet()
 	#train_segnet()
+	test_models()

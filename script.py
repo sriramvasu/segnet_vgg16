@@ -4,6 +4,10 @@ import fnmatch
 import numpy as np
 import scipy.misc as sp
 
+def 
+
+
+
 def convert_labels():
 	path=os.getcwd()
 	color_map='color_map.txt'
@@ -179,10 +183,11 @@ def train_test_split():
 	l.sort()
 	n=len(l)
 	a=np.array(range(n))
-	np.random.shuffle(a)
+	np.random.shuffle(l)
 	test_l=l[:int(split_ratio*n)+1]
 	val_l=l[int(split_ratio*n)+1:int(2*split_ratio*n)+1]
 	train_l=l[int(2*split_ratio*n)+1:]
+	val_l=val_l+test_l
 	folders=['annotated_images','images','labels','new_labels']
 
 	
@@ -214,19 +219,19 @@ def train_test_split():
 		for filename in val_l:
 			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
 
-	path_m=os.path.join(path,'testing_set')
-	for f in folders:
-		path1=os.path.join(path,f)
-		path2=os.path.join(path_m,f)
-		if(not os.path.isdir(path2)):
-			os.makedirs(path2)
-		if(f=='labels'):
-			for filename in [f.split('.')[0]+'.txt' for f in test_l]:
-				shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
-			continue
+	# path_m=os.path.join(path,'testing_set')
+	# for f in folders:
+	# 	path1=os.path.join(path,f)
+	# 	path2=os.path.join(path_m,f)
+	# 	if(not os.path.isdir(path2)):
+	# 		os.makedirs(path2)
+	# 	if(f=='labels'):
+	# 		for filename in [f.split('.')[0]+'.txt' for f in test_l]:
+	# 			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+	# 		continue
 
-		for filename in test_l:
-			shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
+	# 	for filename in test_l:
+	# 		shutil.copy(os.path.join(path1,filename), os.path.join(path2,filename))
 
 def make_labelimg_fromtxt():
 	path='/home/sriram/intern/datasets/data/data-with-labels/'

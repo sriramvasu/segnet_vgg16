@@ -412,7 +412,7 @@ def train_segnet():
 		reader.epoch=reader.epoch+1
 		reader.batch_num=0
 
-def transform_labels(pred1,label_img,match_labels,num_classes):
+def transform_labels(pred1,label_img,num_classes,match_labels=None):
 	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
 	pred=pred1[valid_labels]
 	label_img=label_img[valid_labels]

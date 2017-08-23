@@ -66,263 +66,268 @@ class Segnet():
 		# with tf.variable_scope('preprocess',dtype=tf.float32):
 		# 	mean = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 		# 	self.inp_tensor = self.x-mean;
-		self.rt=dict()
-		self.inp_tensor=self.x
+		with tf.device('/cpu:0'):
 
-		self.rt['data']=self.inp_tensor
-		# Layer 1
-		conv1_1=conv_bn(self.inp_tensor,[3,3],64,[1,1],name='conv1_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv1_1);
+			self.rt=dict()
+			self.inp_tensor=self.x
+
+			self.rt['data']=self.inp_tensor
+			# Layer 1
+			conv1_1=conv_bn(self.inp_tensor,[3,3],64,[1,1],name='conv1_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv1_1)
+			
+
+			conv1_2=conv_bn(conv1_1,[3,3],64,[1,1],name='conv1_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv1_2)
+
+			if(self.is_gpu==True):
+				with tf.device('/gpu:0'):
+					pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
+			else:
+				pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
+			pool1=dropout(pool1,self.keep_prob,self.is_training)
+
+			print_shape(pool1)
+			# self.rt['conv1_1']=conv1_1
+			# self.rt['conv1_2']=conv1_2
+			# self.rt['pool1']=pool1
+			# self.rt['pool1_mask']=pool1_mask
+
+
+			# Layer 2
+			conv2_1=conv_bn(pool1,[3,3],128,[1,1],name='conv2_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv2_1)
+
+			conv2_2=conv_bn(conv2_1,[3,3],128,[1,1],name='conv2_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv2_2)
+
+			if(self.is_gpu==True):
+				with tf.device('/gpu:0'):
+					pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
+			else:
+				pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
+			pool2=dropout(pool2,self.keep_prob,self.is_training)
+
+			print_shape(pool2)
+			# self.rt['conv2_1']=conv2_1
+			# self.rt['conv2_2']=conv2_2
+			# self.rt['pool2']=pool2
+			# self.rt['pool2_mask']=pool2_mask
+
+
+			# Layer 3
+			conv3_1=conv_bn(pool2,[3,3],256,[1,1],name='conv3_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv3_1);
+
+			conv3_2=conv_bn(conv3_1,[3,3],256,[1,1],name='conv3_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv3_2);
+
+			conv3_3=conv_bn(conv3_2,[3,3],256,[1,1],name='conv3_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv3_3);
+			
+			if(self.is_gpu==True):
+				with tf.device('/gpu:0'):
+					pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu')
+			else:
+				pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu')
+			pool3=dropout(pool3,self.keep_prob,self.is_training)
+
+			print_shape(pool3)
+			# self.rt['conv3_1']=conv3_1
+			# self.rt['conv3_2']=conv3_2
+			# self.rt['conv3_3']=conv3_3
+			# self.rt['pool3']=pool3
+			# self.rt['pool3_mask']=pool3_mask
+
+
+
+	 		# Layer 4
+			conv4_1=conv_bn(pool3,[3,3],512,[1,1],name='conv4_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv4_1);
+
+			conv4_2=conv_bn(conv4_1,[3,3],512,[1,1],name='conv4_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv4_2);
+
+			conv4_3=conv_bn(conv4_2,[3,3],512,[1,1],name='conv4_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv4_3);
+
+			if(self.is_gpu==True):
+				with tf.device('/gpu:0'):
+					pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu')
+			else:
+				pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu')
+			
+			pool4=dropout(pool4,self.keep_prob,self.is_training)
+			print_shape(pool4)
+
+			# self.rt['conv4_1']=conv4_1
+			# self.rt['conv4_2']=conv4_2
+			# self.rt['conv4_3']=conv4_3
+			# self.rt['pool4']=pool4
+			# self.rt['pool4_mask']=pool4_mask
+
+
+
+			# Layer 5
+			conv5_1=conv_bn(pool4,[3,3],512,[1,1],name='conv5_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv5_1);
+
+			conv5_2=conv_bn(conv5_1,[3,3],512,[1,1],name='conv5_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv5_2);
+
+			conv5_3=conv_bn(conv5_2,[3,3],512,[1,1],name='conv5_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
+			print_shape(conv5_3);
+
+			if(self.is_gpu==True):
+				with tf.device('/gpu:0'):
+					pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
+			else:
+				pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
+
+			pool5=dropout(pool5,self.keep_prob,self.is_training)
+			print_shape(pool5)
+
+			# self.rt['conv5_1']=conv5_1
+			# self.rt['conv5_2']=conv5_2
+			# self.rt['conv5_3']=conv5_3
+			# self.rt['pool5']=pool5
+			# self.rt['pool5_mask']=pool5_mask
+
+
+
+
+
+
+
+			# DECODER
+
+			# Upsample 5
+			if(self.is_gpu==True):
+				pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=conv5_1.get_shape().as_list(), name='upsample5_gpu')
+			else:
+				# upsample5 = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_cpu",phase_train=self.is_training,reuse=self.reuse)
+				pool5_D=upsample(pool5,out_shape=conv5_1.get_shape().as_list())
+			print_shape(pool5_D);
+
+			# decode 4
+			conv5_3_D = conv_bn(pool5_D, [3,3], 512,[1,1], name="conv5_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv5_3_D);
+			conv5_2_D = conv_bn(conv5_3_D, [3,3], 512,[1,1], name="conv5_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv5_2_D);
+			conv5_1_D = conv_bn(conv5_2_D, [3,3], 512,[1,1], name="conv5_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv5_1_D);
+			
+			conv5_1_D=dropout(conv5_1_D,self.keep_prob,self.is_training)
+			# self.rt['pool5_D']=pool5_D
+			# self.rt['conv5_3_D']=conv5_3_D
+			# self.rt['conv5_2_D']=conv5_2_D
+			# self.rt['conv5_1_D']=conv5_1_D
+
 		
+			# Upsample 4
+			if(self.is_gpu==True):
+				pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=conv4_1.get_shape().as_list(), name='upsample4_gpu')
+			else:
+				# upsample4 = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
+				pool4_D=upsample(conv5_1_D,out_shape=conv4_1.get_shape().as_list())
+			print_shape(pool4_D)
 
-		conv1_2=conv_bn(conv1_1,[3,3],64,[1,1],name='conv1_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv1_2);
+			# decode 4
+			conv4_3_D = conv_bn(pool4_D, [3,3], 512,[1,1], name="conv4_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv4_3_D);
+			conv4_2_D = conv_bn(conv4_3_D, [3,3], 512,[1,1], name="conv4_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv4_2_D);
+			conv4_1_D = conv_bn(conv4_2_D, [3,3], 256,[1,1], name="conv4_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv4_1_D);
 
-		if(self.is_gpu==True):
-			pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
-		else:
-			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
-		pool1=dropout(pool1,self.keep_prob,self.is_training)
-
-		print_shape(pool1);
-		# self.rt['conv1_1']=conv1_1
-		# self.rt['conv1_2']=conv1_2
-		# self.rt['pool1']=pool1
-		# self.rt['pool1_mask']=pool1_mask
-
-
-		# Layer 2
-		conv2_1=conv_bn(pool1,[3,3],128,[1,1],name='conv2_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv2_1);
-
-		conv2_2=conv_bn(conv2_1,[3,3],128,[1,1],name='conv2_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv2_2);
-
-		if(self.is_gpu==True):
-			pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
-		else:
-			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
-		pool2=dropout(pool2,self.keep_prob,self.is_training)
-
-		print_shape(pool2);
-		# self.rt['conv2_1']=conv2_1
-		# self.rt['conv2_2']=conv2_2
-		# self.rt['pool2']=pool2
-		# self.rt['pool2_mask']=pool2_mask
+			conv4_1_D=dropout(conv4_1_D,self.keep_prob,self.is_training)
+			# self.rt['pool4_D']=pool4_D
+			# self.rt['conv4_3_D']=conv4_3_D
+			# self.rt['conv4_2_D']=conv4_2_D
+			# self.rt['conv4_1_D']=conv4_1_D
 
 
 
 
-		# Layer 3
-		conv3_1=conv_bn(pool2,[3,3],256,[1,1],name='conv3_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv3_1);
 
-		conv3_2=conv_bn(conv3_1,[3,3],256,[1,1],name='conv3_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv3_2);
+			# Upsample3
+			if(self.is_gpu==True):
+				pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=conv3_1.get_shape().as_list(), name='upsample3_gpu')
+			else:
+				# upsample3 = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_cpu",phase_train=self.is_training,reuse=self.reuse)
+				pool3_D=upsample(conv4_1_D,out_shape=conv3_1.get_shape().as_list())
+			print_shape(pool3_D);
 
-		conv3_3=conv_bn(conv3_2,[3,3],256,[1,1],name='conv3_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv3_3);
+			# decode 4
+			conv3_3_D = conv_bn(pool3_D, [3,3], 256,[1,1], name="conv3_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv3_3_D);
+			conv3_2_D = conv_bn(conv3_3_D, [3,3], 256,[1,1], name="conv3_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv3_2_D);
+			conv3_1_D = conv_bn(conv3_2_D, [3,3], 128,[1,1], name="conv3_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv3_1_D);
+
+			conv3_1_D=dropout(conv3_1_D,self.keep_prob,self.is_training)
+			# self.rt['pool3_D']=pool3_D
+			# self.rt['conv3_3_D']=conv3_3_D
+			# self.rt['conv3_2_D']=conv3_2_D
+			# self.rt['conv3_1_D']=conv3_1_D
+
 		
-		if(self.is_gpu==True):
-			pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
-		else:
-			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
-		pool3=dropout(pool3,self.keep_prob,self.is_training)
-
-		print_shape(pool3);
-		# self.rt['conv3_1']=conv3_1
-		# self.rt['conv3_2']=conv3_2
-		# self.rt['conv3_3']=conv3_3
-		# self.rt['pool3']=pool3
-		# self.rt['pool3_mask']=pool3_mask
+		    
 
 
+			# Upsample2
+			if(self.is_gpu==True):
+				pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
+			else:
+				# upsample2 = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_cpu",phase_train=self.is_training,reuse=self.reuse)
+				pool2_D=upsample(conv3_1_D,out_shape=conv2_1.get_shape().as_list())
 
- 		# Layer 4
-		conv4_1=conv_bn(pool3,[3,3],512,[1,1],name='conv4_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv4_1);
+			print_shape(pool2_D);
 
-		conv4_2=conv_bn(conv4_1,[3,3],512,[1,1],name='conv4_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv4_2);
+			# decode 4
+			conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv2_2_D);
+			conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
+			print_shape(conv2_1_D);
 
-		conv4_3=conv_bn(conv4_2,[3,3],512,[1,1],name='conv4_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv4_3);
-
-		if(self.is_gpu==True):
-			pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
-		else:
-			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
-		
-		pool4=dropout(pool4,self.keep_prob,self.is_training)
-		print_shape(pool4);
-
-		# self.rt['conv4_1']=conv4_1
-		# self.rt['conv4_2']=conv4_2
-		# self.rt['conv4_3']=conv4_3
-		# self.rt['pool4']=pool4
-		# self.rt['pool4_mask']=pool4_mask
+			conv2_1_D=dropout(conv2_1_D,self.keep_prob,self.is_training)
+			# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
+			# print_shape(deconv2_2);
+			# self.rt['pool2_D']=pool2_D
+			# self.rt['conv2_2_D']=conv2_2_D
+			# self.rt['conv2_1_D']=conv2_1_D
 
 
+		    
 
-		# Layer 5
-		conv5_1=conv_bn(pool4,[3,3],512,[1,1],name='conv5_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv5_1);
+		    # Upsample1
+			if(self.is_gpu==True):
+				pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=conv1_1.get_shape().as_list(), name='upsample1_gpu')
+			else:
+				# upsample1 = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_cpu",phase_train=self.is_training,reuse=self.reuse)
+				pool1_D=upsample(conv2_1_D,out_shape=conv1_1.get_shape().as_list())
 
-		conv5_2=conv_bn(conv5_1,[3,3],512,[1,1],name='conv5_2',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv5_2);
+			print_shape(pool1_D);
 
-		conv5_3=conv_bn(conv5_2,[3,3],512,[1,1],name='conv5_3',phase_train=self.is_training,params=self.params,reuse=self.reuse);
-		print_shape(conv5_3);
+			# decode 4
+			conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
+			print_shape(conv1_2_D);
+			conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
+			print_shape(conv1_1_D);
 
-		if(self.is_gpu==True):
-			pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
-		else:
-			pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
 
-		pool5=dropout(pool5,self.keep_prob,self.is_training)
-		print_shape(pool5)
-
-		# self.rt['conv5_1']=conv5_1
-		# self.rt['conv5_2']=conv5_2
-		# self.rt['conv5_3']=conv5_3
-		# self.rt['pool5']=pool5
-		# self.rt['pool5_mask']=pool5_mask
+			# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
+			# print_shape(deconv1_2);
+			# self.rt['pool1_D']=pool1_D
+			# self.rt['conv1_2_D']=conv1_2_D
+			# self.rt['conv1_1_D']=conv1_1_D
 
 
 
-
-
-
-
-		# DECODER
-
-		# Upsample 5
-		if(self.is_gpu==True):
-			pool5_D = upsample_with_pool_mask(pool5, pool5_mask,ksize=[1,2,2,1], out_shape=conv5_1.get_shape().as_list(), name='upsample5_gpu')
-		else:
-			# upsample5 = upscore_layer(pool5, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv5_1),name= "upsample5_cpu",phase_train=self.is_training,reuse=self.reuse)
-			pool5_D=upsample(pool5,out_shape=conv5_1.get_shape().as_list())
-		print_shape(pool5_D);
-
-		# decode 4
-		conv5_3_D = conv_bn(pool5_D, [3,3], 512,[1,1], name="conv5_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_3_D);
-		conv5_2_D = conv_bn(conv5_3_D, [3,3], 512,[1,1], name="conv5_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_2_D);
-		conv5_1_D = conv_bn(conv5_2_D, [3,3], 512,[1,1], name="conv5_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv5_1_D);
-		
-		conv5_1_D=dropout(conv5_1_D,self.keep_prob,self.is_training)
-		# self.rt['pool5_D']=pool5_D
-		# self.rt['conv5_3_D']=conv5_3_D
-		# self.rt['conv5_2_D']=conv5_2_D
-		# self.rt['conv5_1_D']=conv5_1_D
-
-	
-		# Upsample 4
-		if(self.is_gpu==True):
-			pool4_D = upsample_with_pool_mask(conv5_1_D, pool4_mask,ksize=[1,2,2,1], out_shape=conv4_1.get_shape().as_list(), name='upsample4_gpu')
-		else:
-			# upsample4 = upscore_layer(conv5_1_D, [2, 2], [2,2] , out_channels=512 , out_shape=tf.shape(conv4_1),name= "upsample4_cpu",phase_train=self.is_training,reuse=self.reuse)
-			pool4_D=upsample(conv5_1_D,out_shape=conv4_1.get_shape().as_list())
-		print_shape(pool4_D)
-
-		# decode 4
-		conv4_3_D = conv_bn(pool4_D, [3,3], 512,[1,1], name="conv4_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_3_D);
-		conv4_2_D = conv_bn(conv4_3_D, [3,3], 512,[1,1], name="conv4_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_2_D);
-		conv4_1_D = conv_bn(conv4_2_D, [3,3], 256,[1,1], name="conv4_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv4_1_D);
-
-		conv4_1_D=dropout(conv4_1_D,self.keep_prob,self.is_training)
-		# self.rt['pool4_D']=pool4_D
-		# self.rt['conv4_3_D']=conv4_3_D
-		# self.rt['conv4_2_D']=conv4_2_D
-		# self.rt['conv4_1_D']=conv4_1_D
-
-
-
-
-
-		# Upsample3
-		if(self.is_gpu==True):
-			pool3_D = upsample_with_pool_mask(conv4_1_D, pool3_mask,ksize=[1,2,2,1], out_shape=conv3_1.get_shape().as_list(), name='upsample3_gpu')
-		else:
-			# upsample3 = upscore_layer(conv4_1_D, [2, 2], [2,2] , out_channels=256 , out_shape=tf.shape(conv3_1),name= "upsample3_cpu",phase_train=self.is_training,reuse=self.reuse)
-			pool3_D=upsample(conv4_1_D,out_shape=conv3_1.get_shape().as_list())
-		print_shape(pool3_D);
-
-		# decode 4
-		conv3_3_D = conv_bn(pool3_D, [3,3], 256,[1,1], name="conv3_3_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_3_D);
-		conv3_2_D = conv_bn(conv3_3_D, [3,3], 256,[1,1], name="conv3_2_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_2_D);
-		conv3_1_D = conv_bn(conv3_2_D, [3,3], 128,[1,1], name="conv3_1_D", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv3_1_D);
-
-		conv3_1_D=dropout(conv3_1_D,self.keep_prob,self.is_training)
-		# self.rt['pool3_D']=pool3_D
-		# self.rt['conv3_3_D']=conv3_3_D
-		# self.rt['conv3_2_D']=conv3_2_D
-		# self.rt['conv3_1_D']=conv3_1_D
-
-	
-	    
-
-
-		# Upsample2
-		if(self.is_gpu==True):
-			pool2_D = upsample_with_pool_mask(conv3_1_D, pool2_mask,ksize=[1,2,2,1], out_shape=conv2_1.get_shape().as_list(), name='upsample2_gpu')
-		else:
-			# upsample2 = upscore_layer(conv3_1_D, [2, 2], [2,2] , out_channels=128 , out_shape=tf.shape(conv2_1),name= "upsample2_cpu",phase_train=self.is_training,reuse=self.reuse)
-			pool2_D=upsample(conv3_1_D,out_shape=conv2_1.get_shape().as_list())
-
-		print_shape(pool2_D);
-
-		# decode 4
-		conv2_2_D = conv_bn(pool2_D, [3,3], 128,[1,1], name="conv2_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv2_2_D);
-		conv2_1_D = conv_bn(conv2_2_D, [3,3], 64,[1,1], name="conv2_1_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse)
-		print_shape(conv2_1_D);
-
-		conv2_1_D=dropout(conv2_1_D,self.keep_prob,self.is_training)
-		# deconv2_2 = conv_bn(deconv2_1, [3,3], 64,[1,1], name="deconv2_2", phase_train=self.is_training,params=self.params)
-		# print_shape(deconv2_2);
-		# self.rt['pool2_D']=pool2_D
-		# self.rt['conv2_2_D']=conv2_2_D
-		# self.rt['conv2_1_D']=conv2_1_D
-
-
-	    
-
-	    # Upsample1
-		if(self.is_gpu==True):
-			pool1_D = upsample_with_pool_mask(conv2_1_D, pool1_mask,ksize=[1,2,2,1], out_shape=conv1_1.get_shape().as_list(), name='upsample1_gpu')
-		else:
-			# upsample1 = upscore_layer(conv2_1_D, [2, 2], [2,2] , out_channels=64 , out_shape=tf.shape(conv1_1),name= "upsample1_cpu",phase_train=self.is_training,reuse=self.reuse)
-			pool1_D=upsample(conv2_1_D,out_shape=conv1_1.get_shape().as_list())
-
-		print_shape(pool1_D);
-
-		# decode 4
-		conv1_2_D = conv_bn(pool1_D, [3,3], 64,[1,1], name="conv1_2_D_retrain", phase_train=self.is_training,params=self.params,reuse=self.reuse,trainable=True)
-		print_shape(conv1_2_D);
-		conv1_1_D = conv_bn(conv1_2_D, [3,3], self.num_classes,[1,1], name="conv1_1_D_retrain", phase_train=self.is_training,batch_norm=False,params=self.params,reuse=self.reuse,trainable=True)
-		print_shape(conv1_1_D);
-
-
-		# deconv1_2 = conv_bn(deconv1_1, [3,3], self.num_classes,[1,1], name="deconv1_2", phase_train=self.is_training,params=self.params)
-		# print_shape(deconv1_2);
-		# self.rt['pool1_D']=pool1_D
-		# self.rt['conv1_2_D']=conv1_2_D
-		# self.rt['conv1_1_D']=conv1_1_D
-
-
-
-		# Fully connected layer
-		# self.logits=fc_convol(conv_decode1,[1,1],self.num_classes,name='fc_classify1',params=self.params);  
-		return conv1_1_D;
+			# Fully connected layer
+			# self.logits=fc_convol(conv_decode1,[1,1],self.num_classes,name='fc_classify1',params=self.params);  
+			return conv1_1_D;
 
 def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir):
 	num_classes=8
@@ -338,6 +343,10 @@ def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir):
 	#logfile_name='lej_retrain_4layer_moment'
 	#train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
 	#train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	# modelfile_name='retrain_4layer_moment'
+	# logfile_name='lej_retrain_4layer_moment'
+	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
 	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
 	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
@@ -512,7 +521,7 @@ def test_segnet():
 	#test_data_dir='SegNet-Tutorial/CamVid/test/'
 	#test_label_dir='SegNet-Tutorial/CamVid/testannot/'
 	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
-        test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
 
 	modelfile_name='retrain_models/retrain_4layer_moment'
 	epoch_number=99
@@ -525,7 +534,7 @@ def test_segnet():
 	test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 	test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
 
-	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='segnet_road.npy')
+	net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path='/home/sriram/intern/segnet_road.h5')
 	test_logits=net.inference(test_data,is_training=False,reuse=False);
 	print 'built network';
 	prediction=tf.argmax(test_logits,axis=3);
@@ -535,13 +544,13 @@ def test_segnet():
 	sess.run(tf.global_variables_initializer())
 	print 'initialized vars'
 	moment_vars=[]
-        for var in tf.global_variables():
-                if('moving_mean' in var.name or 'moving_variance' in var.name):
-                        moment_vars.append(var)
+	for var in tf.global_variables():
+		if('moving_mean' in var.name or 'moving_variance' in var.name):
+			moment_vars.append(var)
 
-        saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
+	saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
 
-	saver.restore(sess,modelfile_name+'-'+str(epoch_number))
+	# saver.restore(sess,modelfile_name+'-'+str(epoch_number))
 	print 'restored model'
 	# plt.ion()
 	file=open(os.path.join('camvid_match_labels.txt'))
@@ -783,14 +792,14 @@ def save_hdf5(sess,var_list):
 
 if __name__=="__main__":
 	parser = ArgumentParser()
-	parser.add_argument('-devbox',type=int,default=1)
+	parser.add_argument('-devbox',type=int,default=0)
 	parser.add_argument('-ngpu',type=int,default=0)
 	args = parser.parse_args()
 	
 	if args.devbox:
-	  BASE_DIR = '/root/segnet_vgg16'
-	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
-	  print os.system('echo CUDA_VISBLE_DEVICES')
+		BASE_DIR = '/root/segnet_vgg16'
+		os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
+		print os.system('echo CUDA_VISBLE_DEVICES')
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']=""
@@ -826,5 +835,43 @@ if __name__=="__main__":
 		os.rmtree(scratch_train_label_dir)
 	#test_segnet()
 	#train_segnet()
+		BASE_DIR = '/home/sriram/intern'
+		os.environ['CUDA_VISIBLE_DEVICES']="0"
+	# lis=['1layer','2layer','3layer','4layer']
+	# mfile_names=['retrain_'+i+'_moment'for i in lis]
+	# lfile_names=['lej_retrain_'+i+'_moment' for i in lis]
+
+	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	
+	# if(not os.isdir('./scratch_train_data_dir'):
+	# 	os.makedirs('./scratch_train_data_dir')
+	# if(not os.isdir('./scratch_test_data_dir'):
+	# 	os.makedirs('./scratch_test_data_dir')
+	# if(not os.isdir('./scratch_train_label_dir'):
+	# 	os.makedirs('./scratch_train_label_dir')
+	# if(not os.isdir('./scratch_test_label_dir'):
+	# 	os.makedirs('./scratch_test_label_dir')
+
+	# scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir')
+	# scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir')
+
+	# total=len(os.listdir(train_data_dir))
+	# tr_num=[total,int(total/2),int(total/4)]
+	# for n in tr_num:
+	# 	rand_index=np.random.randint(0,tr_num,[tr_num])
+	# 	image_names=os.listdir(train_data_dir)[rand_index]
+	# 	for name in image_names:
+	# 		shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
+	# 		shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
+
+
+	# for modelfile_name,logfile_name in zip(mfile_names,lfile_names):
+	# 	print modelfile_name,logfile_name
+	# 	train_segnet(modelfile_name,logfile_name,scratch_train_data_dir,scratch_train_label_dir)
+	test_segnet()
+	# train_segnet()
 	#evaluate_segnet_camvid_small()
 	# evaluate_segnet_arl()
