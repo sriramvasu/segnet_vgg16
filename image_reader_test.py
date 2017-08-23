@@ -2,7 +2,7 @@ import numpy as np
 import scipy.misc as sp
 import glob
 from math import floor, ceil
-
+import os
 class image_reader():
 	def shuffle_data(self):
 		self.indices=np.arange(self.size);
@@ -10,31 +10,31 @@ class image_reader():
 		self.data_files=self.data_files[self.indices];self.label_files=self.label_files[self.indices];
 
 	def __init__(self,data_dir,label_dir,batch_size,image_size=None):
-		self.data_dir=data_dir;
-		self.label_dir=label_dir;
-		self.batch_size=batch_size;
-		self.data_files=np.sort(glob.glob(self.data_dir+'*'));
-		self.label_files=np.sort(glob.glob(self.label_dir+'*'));
+		self.data_dir=data_dir
+		self.label_dir=label_dir
+		self.batch_size=batch_size
+		self.data_files=np.sort(glob.glob(os.path.join(self.data_dir,'*.png')))
+		self.label_files=np.sort(glob.glob(os.path.join(self.label_dir,'*.png')))
 		if(image_size==None):
 			self.image_size=sp.imread(self.data_files[0]).shape
 		else:
-			self.image_size=image_size;
-		self.data_siz=np.size(self.data_files);
-		self.label_siz=np.size(self.label_files);
-		self.size=min(self.data_siz,self.label_siz);
-		self.n_batches=ceil(self.size*1.0/self.batch_size);
+			self.image_size=image_size
+		self.data_siz=np.size(self.data_files)
+		self.label_siz=np.size(self.label_files)
+		self.size=min(self.data_siz,self.label_siz)
+		self.n_batches=ceil(self.size*1.0/self.batch_size)
 
-		self.data_files=self.data_files[:self.size];
-		self.label_files=self.label_files[:self.size];\
+		self.data_files=self.data_files[:self.size]
+		self.label_files=self.label_files[:self.size]
 		self.reset_reader();
 		# self.shuffle_data();
 	def print_content():
 		while(raw_input()!='q'):
-			print 'epoch',self.epoch;
-			print 'batch:', self.batch_num;
-			b=self.next_batch();
-			print b[0].shape;
-			print b[1].shape;
+			print 'epoch',self.epoch
+			print 'batch:', self.batch_num
+			b=self.next_batch()
+			print b[0].shape
+			print b[1].shape
 			print '\n';
 	def reset_reader(self):
 		self.cursor=0;

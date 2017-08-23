@@ -324,7 +324,7 @@ class Segnet():
 		# self.logits=fc_convol(conv_decode1,[1,1],self.num_classes,name='fc_classify1',params=self.params);  
 		return conv1_1_D;
 
-def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir,test_data_dir,test_label_dir):
+def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir):
 	num_classes=8
 	n_epochs=100
 	batch_size_train=3
@@ -334,10 +334,10 @@ def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir,test
 	save_every=33
 	base_lr=5e-5
 	img_size=[360,480]
-	modelfile_name='retrain_4layer_moment'
-	logfile_name='lej_retrain_4layer_moment'
-	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	#modelfile_name='retrain_4layer_moment'
+	#logfile_name='lej_retrain_4layer_moment'
+	#train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	#train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
 	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
 	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
@@ -425,21 +425,6 @@ def train_segnet(modelfile_name,logfile_name,train_data_dir,train_label_dir,test
 				[corr,total_pix]=transform_labels(pred_valid,valid_label_batch,match_labels,num_classes)
 				acc=corr*1.0/total_pix
 				s_valid=s_valid+acc
-
-				# if(acc<0.02):
-				# 	while(raw_input()!='q'):
-				# 		viz=np.zeros([pred_valid.shape[0]]+image_size)
-				# 		for cl in range(num_classes):
-				# 			t=np.where(pred_valid==cl)
-				# 			viz[t]=colors[cl,:]
-				# 		sp.imshow(viz[0,:])
-				# if(acc>0.4):
-				# 	while(raw_input()!='q'):
-				# 		viz=np.zeros([pred_valid.shape[0]]+image_size)
-				# 		for cl in range(num_classes):
-				# 			t=np.where(pred_valid==cl)
-				# 			viz[t]=colors[cl,:]
-				# 		sp.imshow(viz[0,:])
 				
 
 				print 'epoch:',reader_valid.epoch+1,', Batch:',reader_valid.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,' aggregate acc:',s_valid*1.0/cnt_valid
@@ -809,7 +794,7 @@ if __name__=="__main__":
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']=""
-	lis=['1layer','2layer','3layer','4layer']
+	lis=['full','half','third','quarter']
 	mfile_names=['retrain_'+i+'_moment'for i in lis]
 	lfile_names=['lej_retrain_'+i+'_moment' for i in lis]
 
@@ -818,20 +803,28 @@ if __name__=="__main__":
         test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
         test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
-	if(not os.isdir('./scratch_train_data_dir'):
-		os.makedirs('./scratch_train_data_dir')
-        if(not os.isdir('./scratch_test_data_dir'):
-                os.makedirs('./scratch_test_data_dir')
-        if(not os.isdir('./scratch_train_label_dir'):
-                os.makedirs('./scratch_train_label_dir')
-        if(not os.isdir('./scratch_test_label_dir'):
-                os.makedirs('./scratch_test_label_dir')
 
 	total=len(os.listdir(train_data_dir))
-	tr_num=[total,int(total/2),]
-
-	scratch_train_data_dir
-	test_segnet()
+	tr_num=[total,int(total/2),int(total/3),int(total/4)]
+	for modelfile_name,logfile_name,n_train_samples in zip(mfile_names,lfile_names,total):
+		if(not os.isdir('./scratch_train_data_dir')):
+                	os.makedirs('./scratch_train_data_dir')
+       
+        	if(not os.isdir('./scratch_train_label_dir')):
+                	os.makedirs('./scratch_train_label_dir')
+		scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir')
+        	scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir')
+		
+		rand_index=np.random.randint(0,total,[n_train_samples])
+		image_filenames=fnmatch.filter(os.listdir(train_data_dir),'*.png')[rand_index]
+		for name in image_filenames:
+			shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
+			shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
+		
+		train_segnet(modelfile_name,logfile_name,scratch_train_data_dir,scratch_train_label_dir)
+		os.rmtree(scratch_train_data_dir)
+		os.rmtree(scratch_train_label_dir)
+	#test_segnet()
 	#train_segnet()
 	#evaluate_segnet_camvid_small()
 	# evaluate_segnet_arl()
