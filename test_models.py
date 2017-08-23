@@ -23,7 +23,7 @@ try:
   from color_map import *
 except:
   pass
-def call_segnet(net_num):
+def call_segnet(net_num,num_classes):
 	return {
 		'1': N1.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
 		'2': N2.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
@@ -39,41 +39,39 @@ def test_models(trial=1):
 
 	path='/home/sriram/intern/models-trial'+str(trial)
 
-	for name in [i if os.path.isdir(os.path.join(path,i))for i in os.listdir(path)]:
+	for name in [i for i in os.listdir(path)]:
 		path1=os.path.join(path,name)
-		for name1 in [i if os.path.isdir(os.path.join(path1,i))for i in os.listdir(path1)]:
-			net_num=int(name.split('-')[1][0])
+		net_num=int(name.split('-')[1][0])
+		num_classes=8
+		batch_size_test=1
+		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
+		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+		reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
+		image_size=reader_test.image_size
+		sess=tf.Session()
+		test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
+		test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
+		print 'Loading Segnet with %d layers'%net_num
+		# net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
+		net=call_segnet(net_num,num_classes)
+		test_logits=net.inference(test_data,is_training=False,reuse=False)
+		print 'built network'
+		prediction=tf.argmax(test_logits,axis=3)
+		#
+		print 'built loss graph'
+		sess.run(tf.global_variables_initializer())
+		print 'initialized vars'
+		moment_vars=[]
+		for var in tf.global_variables():
+			if('moving_mean' in var.name or 'moving_variance' in var.name):
+				moment_vars.append(var)
+		saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
+		for name1 in [i for i in os.listdir(path1)]:
 			path2=os.path.join(path1,name1)
 			path2=os.path.join(path2,'trial'+str(trial))
 			epoch_number=98
 			modelfile_name=os.path.join(path2,'modelfile_'+name1.split('-')[0]+name.split('-')[1]+'-'+str(epoch_number))
-			num_classes=8
-			batch_size_test=1
-			test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
-			test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
-			reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
-			image_size=reader_test.image_size
 
-			sess=tf.Session()
-			test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
-			test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
-			print 'Loading Segnet with %d layers'%net_num
-			# net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
-			net=call_segnet(net_num)
-			test_logits=net.inference(test_data,is_training=False,reuse=False)
-			print 'built network'
-			prediction=tf.argmax(test_logits,axis=3)
-			#
-			print 'built loss graph'
-			sess.run(tf.global_variables_initializer())
-			print 'initialized vars'
-
-			moment_vars=[]
-			for var in tf.global_variables():
-				if('moving_mean' in var.name or 'moving_variance' in var.name):
-					moment_vars.append(var)
-
-			saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
 			saver.restore(sess,os.path.join(path,modelfile_name)+'-'+str(epoch_number))
 
 			s_test=0;count_test=1
@@ -96,3 +94,22 @@ def test_models(trial=1):
 				# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
 				# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 			tf.reset_default_graph()
+if __name__=="__main__":
+	parser = ArgumentParser()
+	parser.add_argument('-devbox',type=int,default=0)
+	parser.add_argument('-ngpu',type=int,default=0)
+	parser.add_argument('-trial',type=int,default=-1)
+	args = parser.parse_args()
+	# if args.trial == -1:
+	# 	print "Enter -trial option"
+	# 	sys.exit()
+
+	# n_layers=7	
+	if args.devbox:
+	  BASE_DIR = '/root/segnet_vgg16'
+	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
+	  print os.system('echo CUDA_VISBLE_DEVICES')
+	else:
+	  BASE_DIR = '/home/sriram/intern'
+	  os.environ['CUDA_VISIBLE_DEVICES']="0"
+	test_models()
