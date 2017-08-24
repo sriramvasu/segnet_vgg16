@@ -48,7 +48,7 @@ def test_models(trial=1):
 		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/images/')
 		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/new_labels/')
 
-		reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
+		reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3],)
 		image_size=reader_test.image_size
 		sess=tf.Session()
 		test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
@@ -78,27 +78,29 @@ def test_models(trial=1):
 			modelfile_name=os.path.join(path2,'modelfile_'+name1.split('-')[0]+name.split('-')[1]+'-'+str(epoch_number))
 			print modelfile_name
 			saver.restore(sess,modelfile_name)
-
+			conf_mat=np.zeros([num_classes,num_classes])
 			s_test=0;count_test=1
 			while(reader_test.batch_num<reader_test.n_batches):
 				[test_data_batch,test_label_batch]=reader_test.next_batch();
 				feed_dict={test_data:test_data_batch,test_labels:test_label_batch};
 				pred=sess.run(prediction,feed_dict=feed_dict)
-				[corr,total_pix]=transform_labels(pred,test_label_batch,num_classes)
+				[corr,total_pix,matr]=transform_labels(pred,test_label_batch,num_classes)
 				# viz=np.zeros([pred.shape[0]]+image_size)
 				# for cl in range(num_classes):
 				# 	t=np.where(pred==cl)
 				# 	viz[t]=colors[cl,:]
-
+				conf_mat=conf_mat+matr
 				acc=corr*1.0/total_pix
 				s_test=s_test+acc
 				agg_acc=s_test/count_test
 				count_test+=1
 				print name,name1,'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
 				print '\n'
+				np.save(name.split('-')[1]+'_'+name1.split('-')[0]+'_'+'confmat.npy',conf_mat)
 				# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
 				# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 			tf.reset_default_graph()
+
 if __name__=="__main__":
 	parser = ArgumentParser()
 	parser.add_argument('-devbox',type=int,default=0)
