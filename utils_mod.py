@@ -275,6 +275,36 @@ def own_maxpool_withargmax(x,k_shape,stride,name):
 	x1=tf.transpose(x,[1,2,0,3])
 	x3=tf.reshape(x1,[shape[1]/k_shape[0],shape[2]/k_shape[1],-1])
 
+def transform_labels(pred1,label_img,num_classes,match_labels=None):
+	valid_labels=np.where(np.logical_and(label_img>=0,label_img<num_classes))
+	pred=pred1[valid_labels]
+	label_img=label_img[valid_labels]
+	non_labels=[]
+	modpred_img=-1*np.ones(pred.shape)
+	#modpred_img=pred[:]
+	non_exist=0
+	#for cl in range(num_classes):
+	#	t=np.where(pred==cl)
+	#	modpred_img[t]=int(match_labels[cl][-1])
+	corr_pix=np.where(pred==label_img)[0].size
+	#per_class1=np.zeros([num_classes])
+	#per_class2=np.zeros([num_classes])
+	#for cl in range(num_classes):
+	#	per_class1[cl]=np.where(np.logical_and(pred==cl,label_img==cl))[0].size*1.0/(np.where(label_img==cl)[0].size+1e-10)
+	#	per_class2[cl]=np.where(label_img==cl)[0].size
+	
+	# su=0;matr=np.zeros([num_classes,num_classes])
+	# for cl in range(num_classes):
+	# 	if(cl not in non_labels):
+	# 		t1=label_img==cl
+	# 		for pl in range(num_classes):
+	# 			t=np.where(np.logical_and(t1,modpred_img==pl))
+	# 			matr[cl,pl]=t[0].size
+
+	for cl in non_labels:
+		non_exist=non_exist+np.where(label_img==cl)[0].size
+	total_pix=modpred_img.size-non_exist
+	return [corr_pix,total_pix]
 
 def upsample_with_pool_mask(updates, mask, ksize=[1, 2, 2, 1],out_shape=None,name=None):
 	input_shape=tf.shape(updates)

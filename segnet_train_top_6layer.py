@@ -15,10 +15,11 @@ except:
   pass
 
 class Segnet():
-	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
+	def __init__(self,keep_prob,num_classes,is_gpu,desktop=True,weights_path=None,pretrained=False):
 		self.num_classes = num_classes
 		self.keep_prob = keep_prob
 		self.is_gpu=is_gpu
+		self.desktop=desktop
 		self.pretrained=pretrained
 		self.params=Param_loader()
 		if weights_path is not None:
@@ -29,7 +30,14 @@ class Segnet():
 		self.x=x
 		self.is_training=is_training
 		self.reuse=reuse
-		self.logits=self.build_network()
+		if(self.is_gpu==True and self.desktop==True):
+			with tf.device('/cpu:0'):
+				self.logits=self.build_network()
+		elif(self.is_gpu==True and self.desktop==False):
+			self.logits=self.build_network()
+		elif(self.is_gpu==False):
+			with tf.device('/cpu:0'):
+				self.logits=self.build_network()
 		return self.logits
 
 	def calc_loss(self,logits,labels,num_classes,weighted=False,weights=None):
@@ -67,11 +75,8 @@ class Segnet():
 		# with tf.variable_scope('preprocess',dtype=tf.float32):
 		# 	mean = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 		# 	self.inp_tensor = self.x-mean;
-		self.rt=dict()
 		self.inp_tensor=self.x
 
-		self.rt['data']=self.inp_tensor
-		# Layer 1
 		conv1_1=conv_bn(self.inp_tensor,[3,3],64,[1,1],name='conv1_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
 		print_shape(conv1_1);
 		
@@ -80,7 +85,12 @@ class Segnet():
 		print_shape(conv1_2);
 
 		if(self.is_gpu==True):
-			pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu')
+			else:
+				pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu')
+
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
 		pool1=dropout(pool1,self.keep_prob,self.is_training)
@@ -100,9 +110,14 @@ class Segnet():
 		print_shape(conv2_2);
 
 		if(self.is_gpu==True):
-			pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
+			else:
+				pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
 		else:
-			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
+			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu')
+
 		pool2=dropout(pool2,self.keep_prob,self.is_training)
 
 		print_shape(pool2);
@@ -125,7 +140,12 @@ class Segnet():
 		print_shape(conv3_3);
 		
 		if(self.is_gpu==True):
-			pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+			else:
+				pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
 		pool3=dropout(pool3,self.keep_prob,self.is_training)
@@ -150,7 +170,11 @@ class Segnet():
 		print_shape(conv4_3);
 
 		if(self.is_gpu==True):
-			pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
+			else:
+				pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
 		
@@ -176,7 +200,11 @@ class Segnet():
 		print_shape(conv5_3);
 
 		if(self.is_gpu==True):
-			pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
+			else:
+				pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
 		else:
 			pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
 

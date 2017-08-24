@@ -40,18 +40,20 @@ def test_models(trial=1):
 	path='/home/sriram/intern/models-trial'+str(trial)
 
 	for name in [i for i in os.listdir(path)]:
+		print name
 		path1=os.path.join(path,name)
-		net_num=int(name.split('-')[1][0])
+		net_num=name.split('-')[1][0]
 		num_classes=8
 		batch_size_test=1
-		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/images/')
-		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/testing_set/new_labels/')
+		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/images/')
+		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/new_labels/')
+
 		reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3])
 		image_size=reader_test.image_size
 		sess=tf.Session()
 		test_data = tf.placeholder(tf.float32,shape=[batch_size_test, image_size[0], image_size[1], image_size[2]])
 		test_labels = tf.placeholder(tf.int64, shape=[batch_size_test, image_size[0], image_size[1]])
-		print 'Loading Segnet with %d layers'%net_num
+		print 'Loading Segnet with %s layers'%net_num
 		# net=Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
 		net=call_segnet(net_num,num_classes)
 		test_logits=net.inference(test_data,is_training=False,reuse=False)
@@ -67,12 +69,15 @@ def test_models(trial=1):
 				moment_vars.append(var)
 		saver=tf.train.Saver(tf.trainable_variables()+moment_vars)
 		for name1 in [i for i in os.listdir(path1)]:
+			print name1
 			path2=os.path.join(path1,name1)
 			path2=os.path.join(path2,'trial'+str(trial))
+			print os.listdir(path2)
+
 			epoch_number=98
 			modelfile_name=os.path.join(path2,'modelfile_'+name1.split('-')[0]+name.split('-')[1]+'-'+str(epoch_number))
-
-			saver.restore(sess,os.path.join(path,modelfile_name)+'-'+str(epoch_number))
+			print modelfile_name
+			saver.restore(sess,modelfile_name)
 
 			s_test=0;count_test=1
 			while(reader_test.batch_num<reader_test.n_batches):

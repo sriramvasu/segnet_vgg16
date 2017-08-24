@@ -16,10 +16,11 @@ except:
   pass
 
 class Segnet():
-	def __init__(self,keep_prob,num_classes,is_gpu,weights_path=None,pretrained=False):
+	def __init__(self,keep_prob,num_classes,is_gpu,desktop=True,weights_path=None,pretrained=False):
 		self.num_classes = num_classes
 		self.keep_prob = keep_prob
 		self.is_gpu=is_gpu
+		self.desktop=desktop
 		self.pretrained=pretrained
 		self.params=Param_loader()
 		if weights_path is not None:
@@ -30,8 +31,14 @@ class Segnet():
 		self.x=x
 		self.is_training=is_training
 		self.reuse=reuse
-		with tf.device('/cpu:0'):
+		if(self.is_gpu==True and self.desktop==True):
+			with tf.device('/cpu:0'):
+				self.logits=self.build_network()
+		elif(self.is_gpu==True and self.desktop==False):
 			self.logits=self.build_network()
+		elif(self.is_gpu==False):
+			with tf.device('/cpu:0'):
+				self.logits=self.build_network()
 		return self.logits
 
 	def calc_loss(self,logits,labels,num_classes,weighted=False,weights=None):
@@ -70,11 +77,8 @@ class Segnet():
 		# 	mean = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
 		# 	self.inp_tensor = self.x-mean;
 
-		self.rt=dict()
 		self.inp_tensor=self.x
 
-		self.rt['data']=self.inp_tensor
-		# Layer 1
 		conv1_1=conv_bn(self.inp_tensor,[3,3],64,[1,1],name='conv1_1',phase_train=self.is_training,params=self.params,reuse=self.reuse);
 		print_shape(conv1_1);
 		
@@ -83,8 +87,12 @@ class Segnet():
 		print_shape(conv1_2);
 
 		if(self.is_gpu==True):
-			with tf.device('/gpu:0'):
-				pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu');
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu')
+			else:
+				pool1,pool1_mask=tf.nn.max_pool_with_argmax(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_gpu')
+
 		else:
 			pool1=tf.nn.max_pool(conv1_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool1_cpu');
 		pool1=dropout(pool1,self.keep_prob,self.is_training)
@@ -104,10 +112,14 @@ class Segnet():
 		print_shape(conv2_2);
 
 		if(self.is_gpu==True):
-			with tf.device('/gpu:0'):
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
+			else:
 				pool2,pool2_mask=tf.nn.max_pool_with_argmax(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_gpu');
 		else:
-			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu');
+			pool2=tf.nn.max_pool(conv2_2,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool2_cpu')
+
 		pool2=dropout(pool2,self.keep_prob,self.is_training)
 
 		print_shape(pool2);
@@ -130,8 +142,12 @@ class Segnet():
 		print_shape(conv3_3);
 		
 		if(self.is_gpu==True):
-			with tf.device('/gpu:0'):
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+			else:
 				pool3,pool3_mask=tf.nn.max_pool_with_argmax(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_gpu');
+
 		else:
 			pool3=tf.nn.max_pool(conv3_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool3_cpu');
 		pool3=dropout(pool3,self.keep_prob,self.is_training)
@@ -156,7 +172,10 @@ class Segnet():
 		print_shape(conv4_3);
 
 		if(self.is_gpu==True):
-			with tf.device('/gpu:0'):
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
+			else:
 				pool4,pool4_mask=tf.nn.max_pool_with_argmax(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_gpu');
 		else:
 			pool4=tf.nn.max_pool(conv4_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool4_cpu');
@@ -183,7 +202,10 @@ class Segnet():
 		print_shape(conv5_3);
 
 		if(self.is_gpu==True):
-			with tf.device('/gpu:0'):
+			if(self.desktop==True):
+				with tf.device('/gpu:0'):
+					pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
+			else:
 				pool5,pool5_mask=tf.nn.max_pool_with_argmax(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_gpu');
 		else:
 			pool5=tf.nn.max_pool(conv5_3,ksize=[1,2,2,1],strides=[1,2,2,1],padding='SAME',name='pool5_cpu');
@@ -861,11 +883,11 @@ if __name__=="__main__":
 	parser.add_argument('-ngpu',type=int,default=0)
 	parser.add_argument('-trial',type=int,default=-1)
 	args = parser.parse_args()
-	# if args.trial == -1:
-	# 	print "Enter -trial option"
-	# 	sys.exit()
+	if args.trial == -1:
+		print "Enter -trial option"
+		sys.exit()
 
-	# n_layers=7	
+	n_layers=7
 	if args.devbox:
 	  BASE_DIR = '/root/segnet_vgg16'
 	  os.environ['CUDA_VISIBLE_DEVICES']=str(args.ngpu)
@@ -873,48 +895,48 @@ if __name__=="__main__":
 	else:
 	  BASE_DIR = '/home/sriram/intern'
 	  os.environ['CUDA_VISIBLE_DEVICES']="0"
-	# lis=['full','half','third','quarter']
-	# mfile_outdirs=['retrain-'+str(n_layers)+'layer-output/'+i+'-training/trial'+str(args.trial)+'/' for i in lis]
-	# mfile_names=['modelfile_'+i+str(n_layers)+'layer'for i in lis]
-	# lfile_names=['logfile_'+i+str(n_layers)+'layer' for i in lis]
+	lis=['full','half','third','quarter']
+	mfile_outdirs=['retrain-'+str(n_layers)+'layer-output/'+i+'-training/trial'+str(args.trial)+'/' for i in lis]
+	mfile_names=['modelfile_'+i+str(n_layers)+'layer'for i in lis]
+	lfile_names=['logfile_'+i+str(n_layers)+'layer' for i in lis]
 
-	# train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
-	# train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
-	# test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
-	# test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
+	train_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/images/')
+	train_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/training_set/new_labels/')
+	test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/images/')
+	test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/val_set/new_labels/')
 	
 
-	# total=len(os.listdir(train_data_dir))
-	# tr_num=[int(total),int(total/2),int(total/3),int(total/4)]
-	# scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir'+str(n_layers))
-	# scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir'+str(n_layers))
-	# if not os.path.isdir(scratch_train_data_dir):
- #        	os.makedirs(scratch_train_data_dir)
- #        if not os.path.isdir(scratch_train_label_dir):
- #        	os.makedirs(scratch_train_label_dir)
+	total=len(os.listdir(train_data_dir))
+	tr_num=[int(total),int(total/2),int(total/3),int(total/4)]
+	scratch_train_data_dir=os.path.abspath('./scratch_train_data_dir'+str(n_layers))
+	scratch_train_label_dir=os.path.abspath('./scratch_train_label_dir'+str(n_layers))
+	if not os.path.isdir(scratch_train_data_dir):
+		os.makedirs(scratch_train_data_dir)
+	if not os.path.isdir(scratch_train_label_dir):
+		os.makedirs(scratch_train_label_dir)
 
-	# for modelfile_name,logfile_name,n_train_samples,outdir in zip(mfile_names,lfile_names,tr_num,mfile_outdirs):
-	# 	outdir = os.path.join(os.getcwd(),outdir)
-	# 	if not os.path.isdir(outdir):
-	# 		os.system('mkdir -p %s'%outdir)
+	for modelfile_name,logfile_name,n_train_samples,outdir in zip(mfile_names,lfile_names,tr_num,mfile_outdirs):
+		outdir = os.path.join(os.getcwd(),outdir)
+		if not os.path.isdir(outdir):
+			os.system('mkdir -p %s'%outdir)
 	
-        		
-	# 	if(len(os.listdir(scratch_train_data_dir))!=0):
-	# 		for name in os.listdir(scratch_train_data_dir):
-	# 			os.remove(os.path.join(scratch_train_data_dir,name))
-	# 	if(len(os.listdir(scratch_train_label_dir))!=0):
-	# 		for name in os.listdir(scratch_train_label_dir):
-	# 			os.remove(os.path.join(scratch_train_label_dir,name))
+			
+		if(len(os.listdir(scratch_train_data_dir))!=0):
+			for name in os.listdir(scratch_train_data_dir):
+				os.remove(os.path.join(scratch_train_data_dir,name))
+		if(len(os.listdir(scratch_train_label_dir))!=0):
+			for name in os.listdir(scratch_train_label_dir):
+				os.remove(os.path.join(scratch_train_label_dir,name))
 
-	# 	rand_index=np.random.randint(0,total,[n_train_samples])
-	# 	image_filenames=np.array(fnmatch.filter(os.listdir(train_data_dir),'*.png'))[rand_index]
-	# 	for name in image_filenames:
-	# 		shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
-	# 		shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
+		rand_index=np.random.randint(0,total,[n_train_samples])
+		image_filenames=np.array(fnmatch.filter(os.listdir(train_data_dir),'*.png'))[rand_index]
+		for name in image_filenames:
+			shutil.copy(os.path.join(train_data_dir,name),scratch_train_data_dir)
+			shutil.copy(os.path.join(train_label_dir,name),scratch_train_label_dir)
 		
-	# 	train_segnet(os.path.join(outdir,modelfile_name),os.path.join(logfile_name),scratch_train_data_dir,scratch_train_label_dir)
-	# 	tf.reset_default_graph()
+		train_segnet(os.path.join(outdir,modelfile_name),os.path.join(logfile_name),scratch_train_data_dir,scratch_train_label_dir)
+		tf.reset_default_graph()
 
 	# test_segnet()
 	#train_segnet()
-	test_models()
+	# test_models()
