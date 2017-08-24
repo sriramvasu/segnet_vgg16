@@ -4,7 +4,21 @@ import fnmatch
 import numpy as np
 import scipy.misc as sp
 
-def 
+def plot_generator():
+	path=os.path.join(BASE_DIR,'all_models')
+	li=['retrain-'+str(i+1)+'layer-output' for i in range(8)]
+	rt=[]
+	for name in li:
+		print name
+		path1=os.path.join(path,name)
+		net_num=name.split('-')[1][0]
+		arr=np.empty([8,8])
+		for name1 in os.listdir(path1):
+			path2=os.path.join(path1,name1,'trial'+str(trial))
+			arr=np.stack([arr,np.load(os.path.join(path2,name.split('-')[1]+'_'+name1.split('-')[0]+'_'+'confmat.npy'))])
+		rt.append(arr)
+
+
 
 
 

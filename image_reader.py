@@ -48,7 +48,7 @@ class image_reader():
 			residue=self.size-self.cursor;
 			self.chunk_labels=np.concatenate([self.label_files[-1*residue:],self.label_files[:self.batch_size-residue]])
 			self.cursor=0;
-			self.shuffle_data();
+			# self.shuffle_data();
 			# self.epoch=self.epoch+1;
 			# self.batch_num=0;
 		self.batch_num=self.batch_num+1

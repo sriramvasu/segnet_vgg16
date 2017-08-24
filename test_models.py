@@ -99,7 +99,7 @@ def test_models(trial=1):
 				np.save(os.path.join(path2,name.split('-')[1]+'_'+name1.split('-')[0]+'_'+'confmat.npy'),conf_mat)
 				# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
 				# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
-			tf.reset_default_graph()
+		tf.reset_default_graph()
 
 if __name__=="__main__":
 	parser = ArgumentParser()
