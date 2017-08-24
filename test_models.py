@@ -37,7 +37,7 @@ def call_segnet(net_num,num_classes):
 
 def test_models(trial=1):
 
-	path=os.path.join(BASE_DIR,'trial'+str(trial))
+	path=os.path.join(BASE_DIR,'all_models')
 
 	for name in [i for i in os.listdir(path)]:
 		print name
