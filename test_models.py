@@ -10,7 +10,7 @@ import segnet_train_top_8layer as N8
 import tensorflow as tf
 import numpy as np
 import os
-from image_reader_test import *
+from image_reader import *
 from utils_mod import *
 from argparse import ArgumentParser
 import fnmatch
@@ -37,7 +37,7 @@ def call_segnet(net_num,num_classes):
 
 def test_models(trial=1):
 
-	path='/home/sriram/intern/models-trial'+str(trial)
+	path=os.path.join(BASE_DIR,'models-trial'+str(trial))
 
 	for name in [i for i in os.listdir(path)]:
 		print name
