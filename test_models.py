@@ -25,19 +25,19 @@ except:
   pass
 def call_segnet(net_num,num_classes):
 	return {
-		'1': N1.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'2': N2.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'3': N3.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'4': N4.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'5': N5.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'6': N6.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'7': N7.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5')),
-		'8': N8.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,weights_path=os.path.join(BASE_DIR,'segnet_road.h5'))
+		'1': N1.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'2': N2.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'3': N3.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'4': N4.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'5': N5.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'6': N6.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'7': N7.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy')),
+		'8': N8.Segnet(keep_prob=0.5,num_classes=num_classes,is_gpu=True,desktop=False,weights_path=os.path.join(BASE_DIR,'segnet_road.npy'))
 		}[net_num]
 
 def test_models(trial=1):
 
-	path=os.path.join(BASE_DIR,'models-trial'+str(trial))
+	path=os.path.join(BASE_DIR,'trial'+str(trial))
 
 	for name in [i for i in os.listdir(path)]:
 		print name
@@ -45,8 +45,8 @@ def test_models(trial=1):
 		net_num=name.split('-')[1][0]
 		num_classes=8
 		batch_size_test=1
-		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/images/')
-		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/test/new_labels/')
+		test_data_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/','trial'+str(trial),'val_set/images/')
+		test_label_dir=os.path.join(BASE_DIR,'datasets/data/data-with-labels/lej15/','trial'+str(trial),'val_set/new_labels/')
 
 		reader_test=image_reader(test_data_dir,test_label_dir,batch_size_test,image_size=[360,480,3],)
 		image_size=reader_test.image_size
@@ -96,7 +96,7 @@ def test_models(trial=1):
 				count_test+=1
 				print name,name1,'epoch:',reader_test.epoch+1,', Batch:',reader_test.batch_num, ', correct pixels:', corr, ', Accuracy:',acc,'Aggregate_acc:',agg_acc
 				print '\n'
-				np.save(name.split('-')[1]+'_'+name1.split('-')[0]+'_'+'confmat.npy',conf_mat)
+				np.save(os.path.join(path2,name.split('-')[1]+'_'+name1.split('-')[0]+'_'+'confmat.npy'),conf_mat)
 				# sp.imsave('outimgs-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),viz[0,:])
 				# sp.imsave('outimgs_real-'+'retrain_4layer_moment'+'-%d-%f.png'%(reader_test.batch_num,acc),test_data_batch[0,:])
 			tf.reset_default_graph()
